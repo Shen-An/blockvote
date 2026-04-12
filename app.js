@@ -6,7 +6,7 @@ const { Level } = require('level');
 const fs = require("fs");
 const pino = require('pino');
 const Web3 = require('web3');
-const mysql = require('mysql'); // 使用mysql2模块
+const mysql = require('mysql2'); // 使用mysql2模块
 
 // 获取合约ABI和字节码
 const VotingSystemContract = require('./build/contracts/VotingSystem.json');
@@ -35,7 +35,7 @@ app.use(express.json());
 const pool = mysql.createPool({
     host: 'localhost',
     user: 'root',
-    password: 'panzhixin',
+    password: '123456',
     database: 'blockvote'
 });
   
