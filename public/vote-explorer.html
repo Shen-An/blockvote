@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>投票浏览器 - 可撤销匿名凭证系统</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0a0e1a; --bg2: #111827; --card: #1a1f35; --border: #2a3050;
+            --text: #f0f4ff; --text2: #8892b0; --text3: #4a5578;
+            --a1: #6366f1; --a2: #8b5cf6; --a3: #a78bfa;
+            --ok: #10b981; --okbg: rgba(16,185,129,0.1);
+            --err: #ef4444; --errbg: rgba(239,68,68,0.1);
+            --warn: #f59e0b; --warnbg: rgba(245,158,11,0.1);
+            --info: #3b82f6; --infobg: rgba(59,130,246,0.1);
+            --r: 16px; --rs: 10px; --rx: 6px;
+        }
+        html[data-theme="light"] {
+            --bg: #f0f2f5; --bg2: #ffffff; --card: #ffffff; --border: #dce1e8;
+            --text: #1e2330; --text2: #64748b; --text3: #94a3b8;
+            --a1: #6366f1; --a2: #8b5cf6; --a3: #a78bfa;
+            --ok: #10b981; --err: #ef4444; --warn: #f59e0b; --info: #3b82f6;
+        }
+        html[data-theme="light"] .bg-grid { background-image: linear-gradient(rgba(99,102,241,0.06)1px,transparent 1px),linear-gradient(90deg,rgba(99,102,241,0.06)1px,transparent 1px); }
+        html[data-theme="light"] .glow { opacity: .4; }
+        .theme-btn { display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;background:var(--card);border:1px solid var(--border);border-radius:var(--rx);cursor:pointer;font-size:16px;transition:.3s;font-family:inherit;line-height:1;padding:0;flex-shrink:0; }
+        .theme-btn:hover { border-color:var(--a1);transform:translateY(-1px); }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; line-height:1.6; }
+        .bg-grid { position:fixed; inset:0; background-image:linear-gradient(rgba(99,102,241,0.03)1px,transparent 1px),linear-gradient(90deg,rgba(99,102,241,0.03)1px,transparent 1px); background-size:60px 60px; pointer-events:none; z-index:0; }
+        .glow { position:fixed; top:-20%; right:-10%; width:500px; height:500px; background:radial-gradient(circle,rgba(99,102,241,0.08) 0%,transparent 70%); border-radius:50%; pointer-events:none; z-index:0; animation:f 8s ease-in-out infinite; }
+        .glow2 { position:fixed; bottom:-20%; left:-10%; width:400px; height:400px; background:radial-gradient(circle,rgba(139,92,246,0.06) 0%,transparent 70%); border-radius:50%; pointer-events:none; z-index:0; animation:f 10s ease-in-out infinite reverse; }
+        @keyframes f { 0%,100%{transform:translate(0,0)scale(1)} 50%{transform:translate(30px,-30px)scale(1.05)} }
+        .container { position:relative; z-index:1; max-width:1000px; margin:0 auto; padding:24px; }
+        .header { display:flex; justify-content:space-between; align-items:center; padding:20px 0; margin-bottom:24px; border-bottom:1px solid var(--border); flex-wrap:wrap; gap:10px; }
+        .header h1 { font-size:22px; font-weight:700; background:linear-gradient(135deg,var(--text),var(--a2)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+        .header-right { display:flex; align-items:center; gap:10px; }
+        .btn { display:inline-flex;align-items:center;gap:6px;padding:8px 20px;border-radius:var(--rx);font-size:13px;font-weight:600;cursor:pointer;border:none;transition:.3s;font-family:inherit;text-decoration:none; }
+        .btn-primary { background:linear-gradient(135deg,var(--a1),var(--a2)); color:white; }
+        .btn-primary:hover { transform:translateY(-1px); box-shadow:0 4px 16px rgba(99,102,241,0.4); }
+        .btn-primary:disabled { opacity:.4; cursor:not-allowed; transform:none; box-shadow:none; }
+        .btn-outline { background:transparent; color:var(--text2); border:1px solid var(--border); }
+        .btn-outline:hover { border-color:var(--a1); color:var(--text); }
+        .btn-sm { padding:6px 14px; font-size:12px; }
+        .card { background:var(--card); border:1px solid var(--border); border-radius:var(--r); padding:24px; margin-bottom:16px; }
+        .card h2 { font-size:16px; font-weight:600; margin-bottom:16px; display:flex; align-items:center; gap:8px; }
+        .search-box { display:flex; gap:10px; margin-bottom:16px; }
+        .search-box input { flex:1; background:var(--bg2); border:1px solid var(--border); border-radius:var(--rx); padding:10px 14px; color:var(--text); font-size:13px; font-family:inherit; outline:none; transition:.3s; }
+        .search-box input:focus { border-color:var(--a1); box-shadow:0 0 0 3px rgba(99,102,241,0.15); }
+        .badge { display:inline-block; padding:2px 10px; border-radius:10px; font-size:11px; font-weight:600; }
+        .badge-ok { background:var(--okbg); color:var(--ok); }
+        .badge-warn { background:var(--warnbg); color:var(--warn); }
+        .badge-err { background:var(--errbg); color:var(--err); }
+        .badge-info { background:var(--infobg); color:var(--info); }
+        .badge-anon { background:rgba(139,92,246,0.15); color:var(--a2); }
+        .dr { display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid rgba(42,48,80,0.4); }
+        .dr:last-child { border-bottom:none; }
+        .dk { color:var(--text2); font-size:13px; }
+        .dv { color:var(--text); font-size:13px; font-weight:500; }
+        .dv-addr { font-family:'SF Mono','Fira Code',monospace; font-size:11px; color:var(--text2); word-break:break-all; }
+        .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+        .stat-card { background:var(--bg2); border:1px solid var(--border); border-radius:var(--rs); padding:16px; text-align:center; }
+        .stat-card .num { font-size:28px; font-weight:800; }
+        .stat-card .num.anon { color:var(--a2); }
+        .stat-card .num.direct { color:var(--warn); }
+        .stat-card .lbl { font-size:12px; color:var(--text2); margin-top:4px; }
+
+        /* Bar chart */
+        .bar-chart { margin:12px 0; }
+        .bar-row { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+        .bar-label { min-width:80px; font-size:13px; color:var(--text2); }
+        .bar-track { flex:1; height:28px; background:var(--bg2); border-radius:var(--rx); overflow:hidden; position:relative; }
+        .bar-fill { height:100%; background:linear-gradient(90deg,var(--a1),var(--a2)); border-radius:var(--rx); transition:width 0.6s ease; min-width:4px; }
+        .bar-count { min-width:40px; text-align:right; font-size:13px; font-weight:600; color:var(--text); }
+
+        /* Table */
+        .table-wrap { overflow-x:auto; margin-top:12px; }
+        table { width:100%; border-collapse:collapse; font-size:12px; }
+        th { background:var(--bg2); color:var(--text2); font-weight:600; padding:10px 12px; text-align:left; border-bottom:1px solid var(--border); white-space:nowrap; }
+        td { padding:10px 12px; border-bottom:1px solid rgba(42,48,80,0.3); color:var(--text); font-family:'SF Mono','Fira Code',monospace; font-size:11px; word-break:break-all; }
+        tr:hover td { background:rgba(99,102,241,0.03); }
+        .anon-row { background:rgba(139,92,246,0.06); }
+        .anon-row:hover td { background:rgba(139,92,246,0.1); }
+
+        /* Proof highlight */
+        .proof-highlight { background:var(--bg2); border:2px solid var(--a2); border-radius:var(--rs); padding:20px; text-align:center; margin:12px 0; }
+        .proof-highlight .big { font-size:36px; }
+        .proof-highlight .label { font-size:14px; color:var(--a3); font-weight:600; margin-top:8px; }
+        .proof-highlight .desc { font-size:13px; color:var(--text2); margin-top:4px; }
+
+        .vote-addr { color:var(--a1); }
+        .vote-addr-zero { color:var(--a2); font-weight:600; }
+
+        .empty-state { text-align:center; padding:60px 20px; color:var(--text2); }
+        .empty-state .icon { font-size:56px; margin-bottom:12px; }
+        .empty-state h3 { font-size:18px; color:var(--text); margin-bottom:8px; }
+
+        .fade-in { animation:fi .4s ease forwards; }
+        @keyframes fi { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+
+        .loading { text-align:center; padding:40px; color:var(--text2); }
+        .loading .spinner { width:36px; height:36px; border:3px solid var(--border); border-top-color:var(--a1); border-radius:50%; animation:spin .8s linear infinite; margin:0 auto 12px; }
+        @keyframes spin { to{transform:rotate(360deg)} }
+
+        .event-count { display:flex; gap:12px; margin:12px 0; }
+        .event-pill { display:flex; align-items:center; gap:6px; padding:6px 14px; border-radius:20px; font-size:12px; font-weight:600; }
+        .event-pill.anon { background:rgba(139,92,246,0.15); color:var(--a2); }
+        .event-pill.direct { background:var(--warnbg); color:var(--warn); }
+
+        .tx-hash { color:var(--text3); font-size:10px; }
+        .link { color:var(--a1); text-decoration:none; font-size:12px; }
+        .link:hover { text-decoration:underline; }
+
+        .msg { display:none; align-items:center; gap:10px; padding:10px 14px; border-radius:var(--rx); font-size:13px; margin:8px 0; }
+        .msg.show { display:flex; }
+        .msg.err { background:var(--errbg); color:var(--err); border:1px solid rgba(239,68,68,0.2); }
+        .msg.info { background:var(--infobg); color:var(--info); border:1px solid rgba(59,130,246,0.2); }
+
+        .nav-bar { display:flex; align-items:center; gap:6px; padding:8px 0; margin-bottom:12px; flex-wrap:wrap; }
+        .nav-bar a { display:inline-flex; align-items:center; gap:4px; padding:5px 12px; border-radius:var(--rx); font-size:12px; font-weight:500; color:var(--text2); text-decoration:none; transition:.3s; background:var(--bg2); border:1px solid var(--border); }
+        .nav-bar a:hover { color:var(--text); border-color:var(--a1); }
+        .nav-bar .nav-back { margin-left:auto; }
+
+        @media(max-width:700px) {
+            .header { flex-direction:column; align-items:flex-start; }
+            .grid-2 { grid-template-columns:1fr; }
+            th, td { font-size:10px; padding:6px 8px; }
+            .bar-label { min-width:60px; font-size:12px; }
+        }
+    </style>
+</head>
+<body>
+<div class="bg-grid"></div><div class="glow"></div><div class="glow2"></div>
+
+<div class="container">
+    <div class="nav-bar">
+        <a href="index.html">首页</a>
+        <a href="dashboard.html">用户中心</a>
+        <a href="javascript:history.back()" class="nav-back">返回</a>
+    </div>
+    <div class="header">
+        <h1>🔍 投票区块链浏览器</h1>
+        <div class="header-right">
+            <button class="theme-btn" onclick="toggleTheme()" title="切换主题"></button>
+            <a href="/credential-system.html" class="btn btn-outline btn-sm">凭证系统</a>
+            <a href="/vote-with-credential.html" class="btn btn-outline btn-sm">匿名投票</a>
+            <a href="/index.html" class="btn btn-outline btn-sm">← 首页</a>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>📋 查询投票合约</h2>
+        <p style="color:var(--text2);font-size:13px;margin-bottom:16px">
+            输入投票合约地址，查看链上投票数据。匿名投票的投票者显示为 <code style="color:var(--a2);background:var(--bg2);padding:2px 6px;border-radius:4px">address(0)</code>，从而证明匿名性。
+        </p>
+        <div class="search-box">
+            <input id="addrInput" placeholder="输入投票合约地址 0x..." value="">
+            <button class="btn btn-primary" onclick="explore()">🔍 查询</button>
+        </div>
+        <div class="msg" id="exploreMsg"></div>
+        <div style="font-size:12px;color:var(--text3);margin-top:8px">
+            💡 提示：可从 <a href="/history-contracts.html" class="link">投票历史</a> 页面复制合约地址，或使用匿名投票页面创建新投票后查看
+        </div>
+    </div>
+
+    <!-- 合约信息 -->
+    <div id="contractSection" style="display:none"></div>
+
+    <!-- 空状态 -->
+    <div class="empty-state" id="emptyState">
+        <div class="icon">🔍</div>
+        <h3>查询投票合约</h3>
+        <p>输入合约地址后，这里将展示链上投票数据和匿名性证明</p>
+        <div style="margin-top:16px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+            <button class="btn btn-outline btn-sm" onclick="loadSampleContract()">📋 加载示例</button>
+            <button class="btn btn-outline btn-sm" onclick="loadRecentContract()">🔄 加载最新合约</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function(){const t=localStorage.getItem('theme');if(t==='light')document.documentElement.setAttribute('data-theme','light');updateThemeIcon()})();
+    function toggleTheme(){const h=document.documentElement;const l=h.getAttribute('data-theme')==='light';l?(h.removeAttribute('data-theme'),localStorage.setItem('theme','dark')):(h.setAttribute('data-theme','light'),localStorage.setItem('theme','light'));updateThemeIcon()}
+    function updateThemeIcon(){document.querySelectorAll('.theme-btn').forEach(b=>{b.textContent=document.documentElement.getAttribute('data-theme')==='light'?'🌙':'☀️'})}
+
+    function $(id) { return document.getElementById(id); }
+    function show(el, msg, type) { if(!el)return; el.className='msg show '+type; el.innerHTML=msg; }
+    function hide(el) { if(el) el.className='msg'; }
+    function truncate(s, n=18) { if(!s)return''; s=String(s); return s.length>n?s.slice(0,n)+'...':s; }
+
+    async function explore() {
+        const addr = $('addrInput').value.trim();
+        if (!addr) { show($('exploreMsg'), '请输入合约地址', 'err'); return; }
+        hide($('exploreMsg'));
+        $('contractSection').style.display = 'none';
+        $('emptyState').style.display = 'none';
+        $('contractSection').innerHTML = `
+            <div class="loading">
+                <div class="spinner"></div>
+                <p>查询合约数据中...</p>
+            </div>
+        `;
+        $('contractSection').style.display = 'block';
+
+        try {
+            const r = await fetch(`/api/ballot/${encodeURIComponent(addr)}/events`);
+            const data = await r.json();
+            if (!data.success) {
+                $('contractSection').innerHTML = `<div class="card"><div class="msg show err">❌ ${data.error}</div></div>`;
+                return;
+            }
+            renderContract(data);
+        } catch(e) {
+            $('contractSection').innerHTML = `<div class="card"><div class="msg show err">❌ 查询失败: ${e.message}</div></div>`;
+        }
+    }
+
+    function renderContract(data) {
+        const { contract, events } = data;
+        const anonPct = contract.totalVotes > 0 ? Math.round(events.anonymousCount / contract.totalVotes * 100) : 0;
+        const optionsHtml = contract.options.map((opt, i) => `
+            <div class="bar-row">
+                <div class="bar-label">${opt}</div>
+                <div class="bar-track">
+                    <div class="bar-fill" style="width:${contract.totalVotes > 0 ? (contract.voteCounts[i]/contract.totalVotes*100) : 0}%"></div>
+                </div>
+                <div class="bar-count">${contract.voteCounts[i]}</div>
+            </div>
+        `).join('');
+
+        // build vote events table
+        let tableRows = '';
+        if (events.votes.length === 0) {
+            tableRows = '<tr><td colspan="4" style="text-align:center;color:var(--text3);padding:20px">暂无投票记录</td></tr>';
+        } else {
+            events.votes.forEach(v => {
+                const voterDisplay = v.isAnonymous
+                    ? '<span class="vote-addr-zero">0x0000...0000 (匿名)</span>'
+                    : `<span class="vote-addr">${truncate(v.voter, 24)}</span>`;
+                tableRows += `
+                    <tr class="${v.isAnonymous ? 'anon-row' : ''}">
+                        <td>#${v.index}</td>
+                        <td>${voterDisplay}</td>
+                        <td>${v.isAnonymous ? '<span class="badge badge-anon">✅ 匿名</span>' : '<span class="badge badge-warn">直接投票</span>'}</td>
+                        <td class="tx-hash">${truncate(v.transactionHash, 20)}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        const html = `
+            <!-- 合约信息 -->
+            <div class="card fade-in">
+                <h2>📄 合约信息</h2>
+                <div class="dr"><span class="dk">标题</span><span class="dv">${contract.title}</span></div>
+                <div class="dr"><span class="dk">合约地址</span><span class="dv" style="font-family:monospace;font-size:11px">${contract.address}</span></div>
+                <div class="dr"><span class="dk">截止时间</span><span class="dv">${contract.deadlineFormatted}</span></div>
+                <div class="dr"><span class="dk">状态</span><span class="dv"><span class="badge ${contract.isOpen ? 'badge-ok' : 'badge-err'}">${contract.isOpen ? '投票中' : '已结束'}</span></span></div>
+                <div class="dr"><span class="dk">总票数</span><span class="dv">${contract.totalVotes}</span></div>
+                <div class="dr"><span class="dk">创建者</span><span class="dv-addr">${events.created.length > 0 ? events.created[0].creator : '未知'}</span></div>
+            </div>
+
+            <!-- 统计 -->
+            <div class="grid-2 fade-in" style="animation-delay:.1s">
+                <div class="stat-card">
+                    <div class="num anon">${events.anonymousCount}</div>
+                    <div class="lbl">🎭 匿名投票 (${anonPct}%)</div>
+                </div>
+                <div class="stat-card">
+                    <div class="num direct">${events.directCount}</div>
+                    <div class="lbl">👤 直接投票</div>
+                </div>
+            </div>
+
+            <!-- 匿名性证明 -->
+            <div class="card fade-in" style="animation-delay:.15s">
+                <h2>🔐 匿名性证明</h2>
+                <div class="proof-highlight">
+                    <div class="big">🎭</div>
+                    <div class="label">匿名投票的链上事件</div>
+                    <div class="desc">
+                        匿名投票的 <code style="background:var(--bg);padding:2px 8px;border-radius:4px">voter</code> 字段为
+                        <code style="background:var(--bg);padding:2px 8px;border-radius:4px;color:var(--a2);font-weight:600">0x0000000000000000000000000000000000000000</code>
+                    </div>
+                    <div style="margin-top:12px;font-size:13px;color:var(--text2)">
+                        ✅ 验证者无法从链上数据识别投票者身份 — <strong>完全匿名</strong>
+                    </div>
+                </div>
+                ${events.directCount > 0 ? `
+                <div style="background:var(--warnbg);border:1px solid rgba(245,158,11,0.2);border-radius:var(--rs);padding:14px;margin-top:12px;display:flex;align-items:center;gap:10px">
+                    <span style="font-size:20px">⚠️</span>
+                    <div style="font-size:13px;color:var(--warn)">
+                        此合约包含 ${events.directCount} 笔直接投票（非匿名），投票者地址公开可见。
+                        要体验完全匿名投票，请使用 <a href="/vote-with-credential.html" style="color:var(--a1);text-decoration:underline">匿名投票页面</a>。
+                    </div>
+                </div>` : `
+                <div style="background:var(--okbg);border:1px solid rgba(16,185,129,0.2);border-radius:var(--rs);padding:14px;margin-top:12px;display:flex;align-items:center;gap:10px">
+                    <span style="font-size:20px">✅</span>
+                    <div style="font-size:13px;color:var(--ok)">
+                        此合约 <strong>所有投票均为匿名</strong>，无任何投票者身份信息泄露。
+                        匿名性由可撤销匿名凭证协议的 Theorem 1 保证。
+                    </div>
+                </div>`}
+            </div>
+
+            <!-- 投票结果 -->
+            <div class="card fade-in" style="animation-delay:.2s">
+                <h2>📊 投票结果</h2>
+                <div class="bar-chart">${optionsHtml}</div>
+            </div>
+
+            <!-- 链上事件 -->
+            <div class="card fade-in" style="animation-delay:.25s">
+                <h2>📜 链上投票事件</h2>
+                <div class="event-count">
+                    <div class="event-pill anon">🎭 匿名: ${events.anonymousCount}</div>
+                    <div class="event-pill direct">👤 直接: ${events.directCount}</div>
+                    <div class="event-pill" style="background:var(--infobg);color:var(--info)">📋 总计: ${events.votes.length}</div>
+                </div>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>投票者 (voter)</th>
+                                <th>类型</th>
+                                <th>交易哈希</th>
+                            </tr>
+                        </thead>
+                        <tbody>${tableRows}</tbody>
+                    </table>
+                </div>
+                <div style="margin-top:12px;font-size:12px;color:var(--text3)">
+                    💡 紫色高亮行 = 匿名投票（voter = address(0)）
+                </div>
+            </div>
+        `;
+
+        $('contractSection').innerHTML = html;
+    }
+
+    // 加载最新合约地址
+    async function loadRecentContract() {
+        try {
+            const r = await fetch('/api/votes/active');
+            const d = await r.json();
+            if (d.success && d.votes && d.votes.length > 0) {
+                $('addrInput').value = d.votes[0].contract_address;
+                explore();
+            } else {
+                show($('exploreMsg'), '暂无活跃投票合约', 'info');
+            }
+        } catch(e) {
+            show($('exploreMsg'), '获取列表失败', 'err');
+        }
+    }
+
+    // 加载测试示例（从历史合约列表获取）
+    async function loadSampleContract() {
+        try {
+            const r = await fetch('/api/votes/active');
+            const d = await r.json();
+            if (d.success && d.votes && d.votes.length > 0) {
+                // 取第二个或第一个
+                const idx = d.votes.length > 1 ? 1 : 0;
+                $('addrInput').value = d.votes[idx].contract_address;
+                explore();
+            } else {
+                show($('exploreMsg'), '暂无可用合约，请先创建投票', 'info');
+            }
+        } catch(e) {
+            show($('exploreMsg'), '获取示例失败', 'err');
+        }
+    }
+
+    // 支持回车搜索
+    $('addrInput').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') explore();
+    });
+</script>
+</body>
+</html>

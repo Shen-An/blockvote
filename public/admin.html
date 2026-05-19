@@ -42,10 +42,25 @@
         .content {
             margin-left: 220px; /* 为了避免导航栏遮挡内容，设置一个左边距 */
             padding: 20px;
+            padding-top: 50px;
         }
+    html[data-theme="dark"] body{background:#0a0e1a;color:#f0f4ff}
+        .theme-btn{position:fixed;top:16px;right:16px;z-index:999;display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;background:#1a1f35;border:1px solid #2a3050;border-radius:6px;cursor:pointer;font-size:18px;transition:.3s;font-family:inherit;line-height:1;padding:0;color:#f0f4ff}
+        .theme-btn:hover{border-color:#6366f1;transform:translateY(-1px)}
+        .topnav { position:fixed; top:0; left:200px; right:0; z-index:99; display:flex; align-items:center; gap:6px; padding:10px 20px; background:#1a1f35; border-bottom:1px solid #2a3050; }
+        .topnav a { display:inline-flex; align-items:center; gap:4px; padding:5px 12px; border-radius:6px; font-size:12px; font-weight:500; color:#8892b0; text-decoration:none; transition:.3s; background:#111827; border:1px solid #2a3050; }
+        .topnav a:hover { color:#f0f4ff; border-color:#6366f1; }
+        .topnav .nav-back { margin-left:auto; }
+        html[data-theme="dark"] .topnav { background:#0a0e1a; }
     </style>
 </head>
 <body>
+    <button class="theme-btn" onclick="toggleTheme()" title="切换主题"></button>
+    <div class="topnav">
+        <a href="index.html">首页</a>
+        <a href="dashboard.html">用户中心</a>
+        <a href="javascript:history.back()" class="nav-back">返回</a>
+    </div>
     <!-- 左侧导航栏 -->
     <div class="sidebar">
         <ul>
@@ -63,6 +78,9 @@
 
     <!-- 这里包含你的脚本链接，包括导航栏的点击事件处理程序 -->
     <script>
+(function(){const t=localStorage.getItem('theme');if(t==='dark')document.documentElement.setAttribute('data-theme','dark');updateThemeIcon()})();
+function toggleTheme(){const h=document.documentElement;const l=h.getAttribute('data-theme')==='dark';l?(h.removeAttribute('data-theme'),localStorage.setItem('theme','light')):(h.setAttribute('data-theme','dark'),localStorage.setItem('theme','dark'));updateThemeIcon()}
+function updateThemeIcon(){document.querySelectorAll('.theme-btn').forEach(b=>{b.textContent=document.documentElement.getAttribute('data-theme')==='dark'?'☀️':'🌙'})}
         // 在页面加载完成后执行
         document.addEventListener('DOMContentLoaded', () => {
             // 获取左侧导航栏中的元素

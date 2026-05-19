@@ -109,10 +109,33 @@
         .pagination button.active {
             background-color: gray;
         }
+        html[data-theme="dark"] body{background:#0a0e1a;color:#f0f4ff}
+        html[data-theme="dark"] .container{background:#1a1f35;border:1px solid #2a3050;box-shadow:0 0 10px rgba(0,0,0,0.3)}
+        html[data-theme="dark"] .block{background:#111827;box-shadow:0 2px 4px rgba(0,0,0,0.2)}
+        html[data-theme="dark"] .block:hover{background:#1a1f35}
+        html[data-theme="dark"] .block-details{background:#111827}
+        html[data-theme="dark"] .search-container input[type="text"]{background:#111827;color:#f0f4ff;border-color:#2a3050}
+        html[data-theme="dark"] .search-container button{background:#1a1f35;color:#f0f4ff;border-color:#2a3050}
+        html[data-theme="dark"] .search-container button:hover{background:#2a3050}
+        html[data-theme="dark"] .pagination button{background:#1a1f35;color:#f0f4ff;border-color:#2a3050}
+        html[data-theme="dark"] .pagination button:hover{background:#2a3050}
+        html[data-theme="dark"] .pagination button.active{background:#6366f1}
+        .theme-btn{position:fixed;top:16px;right:16px;z-index:999;display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;background:#1a1f35;border:1px solid #2a3050;border-radius:6px;cursor:pointer;font-size:18px;transition:.3s;font-family:inherit;line-height:1;padding:0;color:#f0f4ff}
+        .theme-btn:hover{border-color:#6366f1;transform:translateY(-1px)}
+        .nav-bar { display:flex; align-items:center; gap:6px; margin-bottom:16px; flex-wrap:wrap; }
+        .nav-bar a { display:inline-flex; align-items:center; gap:4px; padding:5px 12px; border-radius:6px; font-size:12px; font-weight:500; color:#8892b0; text-decoration:none; transition:.3s; background:#111827; border:1px solid #2a3050; }
+        .nav-bar a:hover { color:#f0f4ff; border-color:#6366f1; }
+        .nav-bar .nav-back { margin-left:auto; }
     </style>
 </head>
 <body>
+    <button class="theme-btn" onclick="toggleTheme()" title="切换主题"></button>
     <div class="container">
+        <div class="nav-bar">
+            <a href="index.html">首页</a>
+            <a href="dashboard.html">用户中心</a>
+            <a href="javascript:history.back()" class="nav-back">返回</a>
+        </div>
         <h1 style="text-align: center;">区块详情</h1>
         <form id="searchForm" onsubmit="searchBlock(); return false;">
             <div class="search-container">
@@ -124,6 +147,9 @@
         <div class="pagination" id="pagination"></div>
     </div>    
     <script>
+(function(){const t=localStorage.getItem('theme');if(t==='dark')document.documentElement.setAttribute('data-theme','dark');updateThemeIcon()})();
+function toggleTheme(){const h=document.documentElement;const l=h.getAttribute('data-theme')==='dark';l?(h.removeAttribute('data-theme'),localStorage.setItem('theme','light')):(h.setAttribute('data-theme','dark'),localStorage.setItem('theme','dark'));updateThemeIcon()}
+function updateThemeIcon(){document.querySelectorAll('.theme-btn').forEach(b=>{b.textContent=document.documentElement.getAttribute('data-theme')==='dark'?'☀️':'🌙'})}
         const dataPerPage = 5;
         let currentPage = 1;
         let currentBlocks = [];

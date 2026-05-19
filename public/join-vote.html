@@ -1,164 +1,186 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Join Vote</title>
+    <title>加入投票 - 可撤销匿名凭证系统</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-            margin: 0;
-            padding: 0;
-        }
-
-        .container {
-            max-width: 600px;
-            margin: 50px auto;
-            background-color: #fff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            text-align: center;
-        }
-
-        h1 {
-            margin-bottom: 20px;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 10px;
-        }
-
-        input[type="text"] {
-            width: calc(100% - 20px);
-            padding: 10px;
-            margin-bottom: 20px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            box-sizing: border-box;
-        }
-
-        button {
-            padding: 10px 20px;
-            background-color: #007bff;
-            color: #fff;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-        }
-
-        button:hover {
-            background-color: #0056b3;
-        }
-
-        #voteInfo {
-            text-align: left;
-            margin-top: 20px;
-        }
-
-        select {
-            width: calc(100% - 20px);
-            padding: 10px;
-            margin-bottom: 20px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            box-sizing: border-box;
-        }
+        :root { --bg:#0a0e1a; --bg2:#111827; --card:#1a1f35; --border:#2a3050; --text:#f0f4ff; --text2:#8892b0; --text3:#4a5578; --a1:#6366f1; --a2:#8b5cf6; --a3:#a78bfa; --ok:#10b981; --err:#ef4444; --warn:#f59e0b; --r:16px; --rs:10px; --rx:6px; }
+        html[data-theme="light"]{--bg:#f0f2f5;--bg2:#ffffff;--card:#ffffff;--border:#dce1e8;--text:#1e2330;--text2:#64748b;--text3:#94a3b8;--a1:#6366f1;--a2:#8b5cf6;--a3:#a78bfa;--ok:#10b981;--err:#ef4444;--warn:#f59e0b;}
+        html[data-theme="light"] .bg-grid{background-image:linear-gradient(rgba(99,102,241,0.06)1px,transparent 1px),linear-gradient(90deg,rgba(99,102,241,0.06)1px,transparent 1px)}
+        html[data-theme="light"] .glow{opacity:.4}
+        .theme-btn{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;background:var(--card);border:1px solid var(--border);border-radius:var(--rx);cursor:pointer;font-size:16px;transition:.3s;font-family:inherit;line-height:1;padding:0;flex-shrink:0}
+        .theme-btn:hover{border-color:var(--a1);transform:translateY(-1px)}
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; line-height:1.6; }
+        .bg-grid { position:fixed; inset:0; background-image:linear-gradient(rgba(99,102,241,0.03)1px,transparent 1px),linear-gradient(90deg,rgba(99,102,241,0.03)1px,transparent 1px); background-size:60px 60px; pointer-events:none; z-index:0; }
+        .glow { position:fixed; top:-20%; right:-10%; width:500px; height:500px; background:radial-gradient(circle,rgba(99,102,241,0.08) 0%,transparent 70%); border-radius:50%; pointer-events:none; z-index:0; animation:f 8s ease-in-out infinite; }
+        @keyframes f { 0%,100%{transform:translate(0,0)scale(1)} 50%{transform:translate(30px,-30px)scale(1.05)} }
+        .container { position:relative; z-index:1; max-width:680px; margin:0 auto; padding:24px; }
+        .header { display:flex; justify-content:space-between; align-items:center; padding:20px 0; margin-bottom:24px; border-bottom:1px solid var(--border); }
+        .header h1 { font-size:22px; font-weight:700; background:linear-gradient(135deg,var(--text),var(--a2)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+        .header-right { display:flex; align-items:center; gap:10px; }
+        .btn { display:inline-flex; align-items:center; gap:6px; padding:8px 20px; border-radius:var(--rx); font-size:13px; font-weight:600; cursor:pointer; border:none; transition:.3s; font-family:inherit; text-decoration:none; }
+        .btn-primary { background:linear-gradient(135deg,var(--a1),var(--a2)); color:white; }
+        .btn-primary:hover { transform:translateY(-1px); box-shadow:0 4px 16px rgba(99,102,241,0.4); }
+        .btn-primary:disabled { opacity:.4; cursor:not-allowed; transform:none; box-shadow:none; }
+        .btn-outline { background:transparent; color:var(--text2); border:1px solid var(--border); }
+        .btn-outline:hover { border-color:var(--a1); color:var(--text); }
+        .btn-success { background:linear-gradient(135deg,var(--ok),#059669); color:white; }
+        .btn-sm { padding:6px 14px; font-size:12px; }
+        .card { background:var(--card); border:1px solid var(--border); border-radius:var(--r); padding:28px; margin-bottom:16px; }
+        .card h2 { font-size:18px; font-weight:700; margin-bottom:8px; display:flex; align-items:center; gap:10px; }
+        .card p { color:var(--text2); font-size:14px; margin-bottom:16px; }
+        .row { margin-bottom:14px; }
+        .row label { display:block; font-size:13px; color:var(--text2); font-weight:500; margin-bottom:6px; }
+        input,select { width:100%; background:var(--bg2); border:1px solid var(--border); border-radius:var(--rx); padding:10px 14px; color:var(--text); font-size:13px; font-family:inherit; outline:none; transition:.3s; }
+        input:focus,select:focus { border-color:var(--a1); box-shadow:0 0 0 3px rgba(99,102,241,0.15); }
+        select { cursor:pointer; }
+        select option { background:var(--bg2); color:var(--text); }
+        .msg { display:none; align-items:center; gap:10px; padding:10px 14px; border-radius:var(--rx); font-size:13px; margin-top:12px; }
+        .msg.show { display:flex; }
+        .msg.ok { background:rgba(16,185,129,0.1); color:var(--ok); border:1px solid rgba(16,185,129,0.2); }
+        .msg.err { background:rgba(239,68,68,0.1); color:var(--err); border:1px solid rgba(239,68,68,0.2); }
+        .msg.info { background:rgba(59,130,246,0.1); color:#3b82f6; border:1px solid rgba(59,130,246,0.2); }
+        .data-box { background:var(--bg2); border-radius:var(--rs); padding:14px; border:1px solid var(--border); font-family:monospace; font-size:12px; line-height:1.8; word-break:break-all; }
+        .dr { display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid rgba(42,48,80,0.5); }
+        .dr:last-child { border-bottom:none; }
+        .dk { color:var(--text2); font-size:13px; }
+        .dv { color:var(--text); font-size:13px; font-weight:500; }
+        .badge { display:inline-block; padding:2px 10px; border-radius:10px; font-size:11px; font-weight:600; }
+        .badge-ok { background:rgba(16,185,129,0.1); color:var(--ok); }
+        .badge-warn { background:rgba(245,158,11,0.1); color:var(--warn); }
+        .badge-err { background:rgba(239,68,68,0.1); color:var(--err); }
+        .nav-bar { display:flex; align-items:center; gap:6px; padding:8px 0; margin-bottom:12px; flex-wrap:wrap; }
+        .nav-bar a { display:inline-flex; align-items:center; gap:4px; padding:5px 12px; border-radius:var(--rx); font-size:12px; font-weight:500; color:var(--text2); text-decoration:none; transition:.3s; background:var(--bg2); border:1px solid var(--border); }
+        .nav-bar a:hover { color:var(--text); border-color:var(--a1); }
+        .nav-bar .nav-back { margin-left:auto; }
+        @media(max-width:600px) { .header { flex-direction:column; gap:12px; } }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>加入投票</h1>
-        <!-- 输入合约地址和按钮 -->
-        <label for="contractAddress">合约地址：</label>
-        <input type="text" id="contractAddress" name="contractAddress" placeholder="在此输入合约地址" required>
-        <button id="joinButton">加入</button>
-
-        <!-- 投票信息显示区域 -->
-        <div id="voteInfo"></div>
+<div class="bg-grid"></div><div class="glow"></div>
+<div class="container">
+    <div class="nav-bar">
+        <a href="index.html">首页</a>
+        <a href="dashboard.html">用户中心</a>
+        <a href="javascript:history.back()" class="nav-back">返回</a>
+    </div>
+    <div class="header">
+        <h1>🔍 加入投票</h1>
+        <div class="header-right">
+            <button class="theme-btn" onclick="toggleTheme()" title="切换主题"></button>
+        </div>
     </div>
 
-    <script>
-        window.addEventListener('DOMContentLoaded', async () => {
-            document.getElementById('joinButton').addEventListener('click', async () => {
-                // 获取用户输入的合约地址
-                const contractAddress = document.getElementById('contractAddress').value.trim();
-                try {
-                    // 请求 MetaMask 授权
-                    const [publicKey] = await window.ethereum.request({ method: 'eth_requestAccounts' });
-                    // 发送请求获取投票信息
-                    const response = await fetch(`/getBallotInfo?contractAddress=${contractAddress}&publicKey=${publicKey}`);
-                    if (!response.ok) {
-                        throw new Error('获取投票项目信息失败');
-                    }
-                    
-                    const data = await response.json();
-                    const voteInfoDiv = document.getElementById('voteInfo');
+    <div class="card">
+        <h2>📋 查询投票</h2>
+        <p>输入合约地址加入已有的区块链投票项目</p>
+        <div class="row">
+            <label>合约地址</label>
+            <input id="contractAddress" placeholder="0x... 输入智能合约地址">
+        </div>
+        <button class="btn btn-primary" onclick="loadVote()" style="width:100%;justify-content:center">📋 查询投票</button>
+        <div class="msg" id="msg"></div>
+    </div>
 
-                    // 根据返回的数据判断投票是否已截至
-                    const currentTimestamp = Math.floor(Date.now() / 1000);
-                    const deadlineTimestamp = new Date(data.deadline).getTime() / 1000;
-                    if (currentTimestamp >= deadlineTimestamp) {
-                        voteInfoDiv.innerHTML = `<p>投票已经截至，无法继续投票。</p>`;
-                        return;
-                    }
+    <div id="voteCard" style="display:none"></div>
+</div>
 
-                    // 判断用户是否已经投过票
-                    if (data.result === 1) {
-                        voteInfoDiv.innerHTML = `<p>您已经投过票了。</p>`;
-                        return;
-                    }
+<script>
+(function(){const t=localStorage.getItem('theme');if(t==='light')document.documentElement.setAttribute('data-theme','light');updateThemeIcon()})();
+function toggleTheme(){const h=document.documentElement;const l=h.getAttribute('data-theme')==='light';l?(h.removeAttribute('data-theme'),localStorage.setItem('theme','dark')):(h.setAttribute('data-theme','light'),localStorage.setItem('theme','light'));updateThemeIcon()}
+function updateThemeIcon(){document.querySelectorAll('.theme-btn').forEach(b=>{b.textContent=document.documentElement.getAttribute('data-theme')==='light'?'🌙':'☀️'})}
+    function $(id) { return document.getElementById(id); }
+    function show(el, msg, type) { el.className = `msg show ${type}`; el.innerHTML = msg; }
+    function hide(el) { el.className = 'msg'; }
 
-                    // 如果投票未截至且用户未投过票，则显示投票选项
-                    voteInfoDiv.innerHTML = `
-                        <p><strong>投票项目名称：</strong> ${data.title}</p>
-                        <p><strong>截止日期：</strong> ${data.deadline}</p>
-                        <label for="selectedOption">选择候选项：</label>
-                        <select id="selectedOption">
-                            ${data.options.map(option => `<option value="${option}">${option}</option>`).join('')}
-                        </select>
-                        <br>
-                        <button id="voteButton">投票</button>
-                    `;
-                    // 添加投票按钮点击事件处理逻辑
-                    document.getElementById('voteButton').addEventListener('click', async () => {
-                        const selectedOption = document.getElementById('selectedOption').value;
-                        const selectedOptionEncoded = encodeURIComponent(selectedOption);
-                        try {
-                            // 发送投票请求
-                            const voteResponse = await fetch(`/vote?contractAddress=${contractAddress}&selectedOption=${selectedOptionEncoded}&publicKey=${publicKey}`, { method: 'POST' });
-                            if (!voteResponse.ok) {
-                                throw new Error('投票失败');
-                            }
-                            const ret = await voteResponse.json();
-                            if (ret.success) {
-                                // 提示投票成功并跳转到index.html界面
-                                alert(`您的选择是： ${selectedOption}，投票成功！`);
-                                window.location.href = 'index.html';
-                            } else {
-                                // 处理投票失败情况
-                                if (ret.message === '您已经投过票了') {
-                                    alert('您已经投过票了！');
-                                } else if (ret.message === '投票已经截止') {
-                                    alert('投票已经截止，无法继续投票。');
-                                } else {
-                                    alert('投票失败，请重试。');
-                                }
-                            }
-                        } catch (error) {
-                            console.error('投票时出错：', error);
-                            alert('投票失败，您已经对该项目完成投票。');
-                        }
-                    });
-                } catch (error) {
-                    console.error('获取投票项目信息时出错：', error);
-                    alert('获取投票项目信息失败，请检查合约地址是否正确。');
-                }
-            });
-        });
-    </script>
+    async function loadVote() {
+        const msg = $('msg'); hide(msg);
+        const addr = $('contractAddress').value.trim();
+        if (!addr) { show(msg, '请输入合约地址', 'err'); return; }
+
+        // 请求 MetaMask 授权用于签名投票
+        let publicKey = null;
+        try {
+            if (window.ethereum) {
+                const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                publicKey = accounts[0];
+            }
+        } catch(e) {}
+
+        const vc = $('voteCard'); vc.style.display = 'none';
+
+        try {
+            const response = await fetch(`/getBallotInfo?contractAddress=${addr}`);
+            if (!response.ok) throw new Error('获取投票信息失败');
+            const data = await response.json();
+            if (!data.title) { show(msg, '未找到该合约地址对应的投票', 'err'); return; }
+
+            const currentTs = Math.floor(Date.now() / 1000);
+            const deadlineTs = new Date(data.deadline).getTime() / 1000;
+            const isExpired = currentTs >= deadlineTs;
+
+            vc.style.display = 'block';
+            vc.innerHTML = `
+                <div class="card">
+                    <h2>📊 投票详情</h2>
+                    <div class="data-box">
+                        <div class="dr"><span class="dk">标题</span><span class="dv">${data.title}</span></div>
+                        <div class="dr"><span class="dk">截止</span><span class="dv">${data.deadline}</span></div>
+                        <div class="dr"><span class="dk">状态</span><span class="dv"><span class="badge ${isExpired ? 'badge-err' : 'badge-ok'}">${isExpired ? '已截止' : '投票中'}</span></span></div>
+                        <div class="dr"><span class="dk">地址</span><span class="dv" style="font-size:11px">${addr}</span></div>
+                    </div>
+                    ${isExpired ? '<div class="msg show err">⛔ 投票已截止，无法继续投票</div>' : `
+                    <div class="row" style="margin-top:16px">
+                        <label>选择候选项</label>
+                        <select id="voteOption">${data.options.map(o => `<option value="${o}">${o}</option>`).join('')}</select>
+                    </div>
+                    <button class="btn btn-success" onclick="castVote('${addr}')" style="width:100%;justify-content:center">🗳️ 提交投票</button>
+                    `}
+                </div>
+            `;
+            show(msg, '投票加载成功', 'ok');
+        } catch(e) { show(msg, '加载失败: ' + e.message, 'err'); }
+    }
+
+    async function castVote(contractAddress) {
+        const msg = $('msg'); hide(msg);
+        const selectedOption = $('voteOption').value;
+        if (!selectedOption) { show(msg, '请选择候选项', 'err'); return; }
+
+        let publicKey = null;
+        try {
+            if (window.ethereum) {
+                const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                publicKey = accounts[0];
+            }
+        } catch(e) { show(msg, '请安装 MetaMask 并授权', 'err'); return; }
+        if (!publicKey) { show(msg, '请安装 MetaMask', 'err'); return; }
+
+        show(msg, '⏳ 正在提交投票...', 'info');
+
+        try {
+            const voteResponse = await fetch(`/vote?contractAddress=${contractAddress}&selectedOption=${encodeURIComponent(selectedOption)}&publicKey=${publicKey}`, { method: 'POST' });
+            const ret = await voteResponse.json();
+            if (ret.success) {
+                hide(msg);
+                $('voteCard').innerHTML = `
+                    <div class="card">
+                        <div class="msg show ok" style="text-align:center;display:flex;justify-content:center">
+                            ✅ 投票成功！您的选择是：<strong>${selectedOption}</strong>
+                        </div>
+                        <div style="display:flex;gap:10px;margin-top:16px">
+                            <a href="/index.html" class="btn btn-primary" style="flex:1;justify-content:center">← 返回首页</a>
+                        </div>
+                    </div>
+                `;
+            } else {
+                show(msg, '投票失败: ' + (ret.message || '未知错误'), 'err');
+            }
+        } catch(e) { show(msg, '投票失败: ' + e.message, 'err'); }
+    }
+</script>
 </body>
 </html>

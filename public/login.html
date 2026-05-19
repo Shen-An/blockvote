@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录 - 可撤销匿名凭证系统</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root { --bg:#0a0e1a; --bg2:#111827; --card:#1a1f35; --border:#2a3050; --text:#f0f4ff; --text2:#8892b0; --a1:#6366f1; --a2:#8b5cf6; --ok:#10b981; --err:#ef4444; --r:16px; --rs:10px; --rx:6px; }
+        html[data-theme="light"]{--bg:#f0f2f5;--bg2:#ffffff;--card:#ffffff;--border:#dce1e8;--text:#1e2330;--text2:#64748b;--text3:#94a3b8;--a1:#6366f1;--a2:#8b5cf6;--a3:#a78bfa;--ok:#10b981;--err:#ef4444;--warn:#f59e0b;}
+        html[data-theme="light"] .bg-grid{background-image:linear-gradient(rgba(99,102,241,0.06)1px,transparent 1px),linear-gradient(90deg,rgba(99,102,241,0.06)1px,transparent 1px)}
+        html[data-theme="light"] .glow{opacity:.4}
+        .theme-btn{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;background:var(--card);border:1px solid var(--border);border-radius:var(--rx);cursor:pointer;font-size:16px;transition:.3s;font-family:inherit;line-height:1;padding:0;flex-shrink:0}
+        .theme-btn:hover{border-color:var(--a1);transform:translateY(-1px)}
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; display:flex; align-items:center; justify-content:center; }
+        .bg-grid { position:fixed; inset:0; background-image:linear-gradient(rgba(99,102,241,0.03)1px,transparent 1px),linear-gradient(90deg,rgba(99,102,241,0.03)1px,transparent 1px); background-size:60px 60px; pointer-events:none; }
+        .glow { position:fixed; top:-30%; right:-10%; width:500px; height:500px; background:radial-gradient(circle,rgba(99,102,241,0.08) 0%,transparent 70%); border-radius:50%; pointer-events:none; animation:f 8s ease-in-out infinite; }
+        @keyframes f { 0%,100%{transform:translate(0,0)scale(1)} 50%{transform:translate(30px,-30px)scale(1.05)} }
+        .card { position:relative; z-index:1; background:var(--card); border:1px solid var(--border); border-radius:var(--r); padding:40px; width:400px; max-width:90vw; }
+        .card h1 { font-size:24px; font-weight:700; text-align:center; margin-bottom:4px; }
+        .card .sub { text-align:center; color:var(--text2); font-size:14px; margin-bottom:24px; }
+        .field { margin-bottom:16px; }
+        .field label { display:block; font-size:13px; color:var(--text2); margin-bottom:6px; font-weight:500; }
+        .field input { width:100%; background:var(--bg2); border:1px solid var(--border); border-radius:var(--rx); padding:12px 14px; color:var(--text); font-size:14px; outline:none; transition:.3s; }
+        .field input:focus { border-color:var(--a1); box-shadow:0 0 0 3px rgba(99,102,241,0.15); }
+        .btn { width:100%; padding:12px; border-radius:var(--rx); font-size:14px; font-weight:600; border:none; cursor:pointer; transition:.3s; font-family:inherit; }
+        .btn-primary { background:linear-gradient(135deg,var(--a1),var(--a2)); color:white; }
+        .btn-primary:hover { transform:translateY(-1px); box-shadow:0 4px 16px rgba(99,102,241,0.4); }
+        .msg { display:none; padding:10px 14px; border-radius:var(--rx); font-size:13px; margin-top:12px; }
+        .msg.show { display:block; }
+        .msg.err { background:rgba(239,68,68,0.1); color:var(--err); border:1px solid rgba(239,68,68,0.2); }
+        .msg.ok { background:rgba(16,185,129,0.1); color:var(--ok); border:1px solid rgba(16,185,129,0.2); }
+        .link { text-align:center; margin-top:16px; font-size:13px; color:var(--text2); }
+        .link a { color:var(--a1); text-decoration:none; }
+        .link a:hover { text-decoration:underline; }
+        .back { position:fixed; top:20px; left:20px; z-index:2; display:flex; align-items:center; gap:6px; }
+        .back a { color:var(--text2); text-decoration:none; font-size:13px; display:inline-flex; align-items:center; gap:4px; padding:5px 10px; border-radius:var(--rx); background:var(--bg2); border:1px solid var(--border); transition:.3s; }
+        .back a:hover { color:var(--text); border-color:var(--a1); }
+    </style>
+</head>
+<body>
+<div class="bg-grid"></div><div class="glow"></div>
+<div class="back"><a href="index.html">首页</a><a href="dashboard.html">用户中心</a><a href="javascript:history.back()" style="color:var(--text2);text-decoration:none;font-size:13px;display:inline-flex;align-items:center;gap:4px;padding:5px 10px;border-radius:var(--rx);background:var(--bg2);border:1px solid var(--border);transition:.3s">返回</a><button class="theme-btn" onclick="toggleTheme()" title="切换主题"></button></div>
+<div class="card">
+    <h1>🔐 登录</h1>
+    <p class="sub">登录后可管理匿名凭证和投票</p>
+    <div class="field">
+        <label>用户名</label>
+        <input type="text" id="username" placeholder="输入用户名" autocomplete="username">
+    </div>
+    <div class="field">
+        <label>密码</label>
+        <input type="password" id="password" placeholder="输入密码" autocomplete="current-password">
+    </div>
+    <button class="btn btn-primary" onclick="doLogin()">登录</button>
+    <div class="msg" id="msg"></div>
+    <div class="link">还没有账号？<a href="/register.html">立即注册</a></div>
+</div>
+<script>
+(function(){const t=localStorage.getItem('theme');if(t==='light')document.documentElement.setAttribute('data-theme','light');updateThemeIcon()})();
+function toggleTheme(){const h=document.documentElement;const l=h.getAttribute('data-theme')==='light';l?(h.removeAttribute('data-theme'),localStorage.setItem('theme','dark')):(h.setAttribute('data-theme','light'),localStorage.setItem('theme','light'));updateThemeIcon()}
+function updateThemeIcon(){document.querySelectorAll('.theme-btn').forEach(b=>{b.textContent=document.documentElement.getAttribute('data-theme')==='light'?'🌙':'☀️'})}
+const redirectUrl = new URLSearchParams(window.location.search).get('redirect') || '/index.html';
+async function doLogin() {
+    const msg = document.getElementById('msg');
+    msg.className = 'msg';
+    const username = document.getElementById('username').value.trim();
+    const password = document.getElementById('password').value;
+    if (!username || !password) { msg.className = 'msg show err'; msg.textContent = '请填写用户名和密码'; return; }
+    try {
+        const r = await fetch('/api/auth/login', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({username, password}) });
+        const d = await r.json();
+        if (d.success) {
+            msg.className = 'msg show ok';
+            msg.textContent = '登录成功！正在跳转...';
+            setTimeout(() => { window.location.href = redirectUrl; }, 800);
+        } else {
+            msg.className = 'msg show err';
+            msg.textContent = d.message || '登录失败';
+        }
+    } catch(e) { msg.className = 'msg show err'; msg.textContent = '请求失败: ' + e.message; }
+}
+document.getElementById('username').addEventListener('keydown', e => { if(e.key==='Enter') document.getElementById('password').focus(); });
+document.getElementById('password').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+</script>
+</body>
+</html>

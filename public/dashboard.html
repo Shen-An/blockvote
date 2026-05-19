@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>用户中心 - 可撤销匿名凭证系统</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root { --bg:#0a0e1a; --bg2:#111827; --card:#1a1f35; --border:#2a3050; --text:#f0f4ff; --text2:#8892b0; --text3:#4a5578; --a1:#6366f1; --a2:#8b5cf6; --ok:#10b981; --err:#ef4444; --warn:#f59e0b; --r:16px; --rs:10px; --rx:6px; }
+        html[data-theme="light"]{--bg:#f0f2f5;--bg2:#ffffff;--card:#ffffff;--border:#dce1e8;--text:#1e2330;--text2:#64748b;--text3:#94a3b8;--a1:#6366f1;--a2:#8b5cf6;--a3:#a78bfa;--ok:#10b981;--err:#ef4444;--warn:#f59e0b;}
+        html[data-theme="light"] .bg-grid{background-image:linear-gradient(rgba(99,102,241,0.06)1px,transparent 1px),linear-gradient(90deg,rgba(99,102,241,0.06)1px,transparent 1px)}
+        html[data-theme="light"] .glow{opacity:.4}
+        .theme-btn{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;background:var(--card);border:1px solid var(--border);border-radius:var(--rx);cursor:pointer;font-size:16px;transition:.3s;font-family:inherit;line-height:1;padding:0;flex-shrink:0}
+        .theme-btn:hover{border-color:var(--a1);transform:translateY(-1px)}
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+        .bg-grid { position:fixed; inset:0; background-image:linear-gradient(rgba(99,102,241,0.03)1px,transparent 1px),linear-gradient(90deg,rgba(99,102,241,0.03)1px,transparent 1px); background-size:60px 60px; pointer-events:none; z-index:0; }
+        .glow { position:fixed; top:-20%; right:-10%; width:500px; height:500px; background:radial-gradient(circle,rgba(99,102,241,0.08) 0%,transparent 70%); border-radius:50%; pointer-events:none; z-index:0; animation:f 8s ease-in-out infinite; }
+        @keyframes f { 0%,100%{transform:translate(0,0)scale(1)} 50%{transform:translate(30px,-30px)scale(1.05)} }
+        .container { position:relative; z-index:1; max-width:1000px; margin:0 auto; padding:24px; }
+        .header { display:flex; justify-content:space-between; align-items:center; padding:20px 0; margin-bottom:24px; border-bottom:1px solid var(--border); }
+        .header h1 { font-size:22px; font-weight:700; background:linear-gradient(135deg,var(--text),var(--a2)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+        .header-right { display:flex; align-items:center; gap:12px; }
+        .user-badge { display:flex; align-items:center; gap:8px; background:var(--card); padding:8px 16px; border-radius:var(--rx); border:1px solid var(--border); font-size:13px; }
+        .user-badge .avatar { width:28px; height:28px; border-radius:50%; background:linear-gradient(135deg,var(--a1),var(--a2)); display:flex; align-items:center; justify-content:center; font-size:12px; color:white; font-weight:600; }
+        .btn { display:inline-flex; align-items:center; gap:6px; padding:8px 20px; border-radius:var(--rx); font-size:13px; font-weight:600; cursor:pointer; border:none; transition:.3s; font-family:inherit; text-decoration:none; }
+        .btn-primary { background:linear-gradient(135deg,var(--a1),var(--a2)); color:white; }
+        .btn-primary:hover { transform:translateY(-1px); box-shadow:0 4px 16px rgba(99,102,241,0.4); }
+        .btn-outline { background:transparent; color:var(--text2); border:1px solid var(--border); }
+        .btn-outline:hover { border-color:var(--a1); color:var(--text); }
+        .btn-danger { background:linear-gradient(135deg,var(--err),#dc2626); color:white; }
+        .btn-sm { padding:6px 14px; font-size:12px; }
+        .card { background:var(--card); border:1px solid var(--border); border-radius:var(--r); padding:24px; margin-bottom:16px; }
+        .card h2 { font-size:16px; font-weight:600; margin-bottom:16px; display:flex; align-items:center; gap:8px; }
+        .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:16px; }
+        .stat-card { background:var(--bg2); border:1px solid var(--border); border-radius:var(--rs); padding:20px; text-align:center; }
+        .stat-card .num { font-size:32px; font-weight:800; background:linear-gradient(135deg,var(--a1),var(--a2)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+        .stat-card .lbl { font-size:13px; color:var(--text2); margin-top:4px; }
+        .flow-steps { display:flex; gap:8px; flex-wrap:wrap; margin:16px 0; }
+        .flow-step { flex:1; min-width:120px; padding:16px; background:var(--bg2); border:1px solid var(--border); border-radius:var(--rs); text-align:center; cursor:pointer; transition:.3s; text-decoration:none; color:var(--text); }
+        .flow-step:hover { border-color:var(--a1); transform:translateY(-2px); }
+        .flow-step .icon { font-size:28px; }
+        .flow-step .title { font-size:13px; font-weight:600; margin-top:8px; }
+        .flow-step .desc { font-size:11px; color:var(--text2); margin-top:4px; }
+        .dr { display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid rgba(42,48,80,0.4); }
+        .dr:last-child { border-bottom:none; }
+        .dk { color:var(--text2); font-size:13px; }
+        .dv { color:var(--text); font-size:13px; font-weight:500; }
+        .badge { display:inline-block; padding:2px 10px; border-radius:10px; font-size:11px; font-weight:600; }
+        .badge-err { background:rgba(239,68,68,0.1); color:var(--err); }
+        .badge-ok { background:rgba(16,185,129,0.1); color:var(--ok); }
+        .badge-warn { background:rgba(245,158,11,0.1); color:var(--warn); }
+        .badge-info { background:rgba(59,130,246,0.1); color:#3b82f6; }
+        .nav-bar { display:flex; align-items:center; gap:6px; padding:8px 0; margin-bottom:12px; flex-wrap:wrap; }
+        .nav-bar a { display:inline-flex; align-items:center; gap:4px; padding:5px 12px; border-radius:var(--rx); font-size:12px; font-weight:500; color:var(--text2); text-decoration:none; transition:.3s; background:var(--bg2); border:1px solid var(--border); }
+        .nav-bar a:hover { color:var(--text); border-color:var(--a1); }
+        .nav-bar .nav-back { margin-left:auto; }
+        @media(max-width:700px) { .header { flex-direction:column; gap:12px; } .flow-steps { flex-direction:column; } }
+    </style>
+</head>
+<body>
+<div class="bg-grid"></div><div class="glow"></div>
+<div class="container">
+    <div class="nav-bar">
+        <a href="index.html">首页</a>
+        <a href="dashboard.html">用户中心</a>
+        <a href="javascript:history.back()" class="nav-back">返回</a>
+    </div>
+    <div class="header">
+        <h1>📊 用户中心</h1>
+        <div class="header-right" id="headerRight">
+            <button class="theme-btn" onclick="toggleTheme()" title="切换主题"></button>
+            <div class="user-badge" id="userBadge"><div class="avatar">?</div><span id="userNameDisplay">未登录</span></div>
+            <button class="btn btn-danger btn-sm" onclick="doLogout()">退出</button>
+        </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="grid" id="statsGrid">
+        <div class="stat-card"><div class="num">-</div><div class="lbl">系统状态</div></div>
+        <div class="stat-card"><div class="num">-</div><div class="lbl">凭证状态</div></div>
+        <div class="stat-card"><div class="num">-</div><div class="lbl">匿名令牌</div></div>
+        <div class="stat-card"><div class="num">-</div><div class="lbl">匿名投票</div></div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="card" style="margin-top:8px">
+        <h2>⚡ 快速操作</h2>
+        <div class="flow-steps" id="quickActions"></div>
+    </div>
+
+    <!-- Status Detail -->
+    <div class="card">
+        <h2>📋 凭证状态</h2>
+        <div id="statusDetail"><p style="color:var(--text2);font-size:14px">正在加载...</p></div>
+    </div>
+</div>
+
+<script>
+(function(){const t=localStorage.getItem('theme');if(t==='light')document.documentElement.setAttribute('data-theme','light');updateThemeIcon()})();
+function toggleTheme(){const h=document.documentElement;const l=h.getAttribute('data-theme')==='light';l?(h.removeAttribute('data-theme'),localStorage.setItem('theme','dark')):(h.setAttribute('data-theme','light'),localStorage.setItem('theme','light'));updateThemeIcon()}
+function updateThemeIcon(){document.querySelectorAll('.theme-btn').forEach(b=>{b.textContent=document.documentElement.getAttribute('data-theme')==='light'?'🌙':'☀️'})}
+let currentUser = null;
+let sysStatus = { initialized: false };
+
+async function checkAuth() {
+    try {
+        const r = await fetch('/api/auth/me');
+        const d = await r.json();
+        if (d.loggedIn) {
+            currentUser = d.user;
+            document.getElementById('userNameDisplay').textContent = d.user.username;
+            document.querySelector('.avatar').textContent = d.user.username[0].toUpperCase();
+        } else {
+            window.location.href = '/login.html';
+            return;
+        }
+    } catch(e) { window.location.href = '/login.html'; return; }
+    loadStatus();
+}
+
+async function loadStatus() {
+    try {
+        const r = await fetch('/api/credential/status');
+        const d = await r.json();
+        sysStatus = d;
+        updateStats();
+    } catch(e) { console.error(e); }
+}
+
+// 每 3 秒动态刷新凭证状态
+setInterval(() => {
+    if (currentUser) loadStatus();
+}, 3000);
+
+function updateStats() {
+    const isRevoked = !!sysStatus.credentialRevoked;
+    const hasCred = !!sysStatus.hasCredential && !isRevoked;
+    const credStatus = sysStatus.credentialStatus || (isRevoked ? 'revoked' : (hasCred ? 'active' : 'none'));
+    const hasTok = (sysStatus.tokenCount || 0) > 0;
+    const stats = [
+        sysStatus.initialized ? '✅ 已初始化' : '⏳ 未初始化',
+        credStatus === 'revoked' ? '🚫 已撤销' : (hasCred ? '✅ 已获取' : '⏳ 未获取'),
+        hasTok ? '✅ 已生成' : '⏳ 未生成',
+        isRevoked ? '🚫 不可投票' : (localStorage.getItem('voted_' + (currentUser?.userId || '')) === 'true' ? '✅ 已完成' : '📝 可投票'),
+    ];
+    document.querySelectorAll('.stat-card .num').forEach((el, i) => el.textContent = stats[i]);
+
+    // Quick actions
+    const qa = document.getElementById('quickActions');
+    qa.innerHTML = `
+        <a href="/credential-system.html" class="flow-step">
+            <div class="icon">🔐</div>
+            <div class="title">凭证系统</div>
+            <div class="desc">初始化 + 获取凭证</div>
+        </a>
+        <a href="/vote-with-credential.html" class="flow-step">
+            <div class="icon">🎭</div>
+            <div class="title">匿名投票</div>
+            <div class="desc">使用凭证匿名投票</div>
+        </a>
+        <a href="/create-vote.html" class="flow-step">
+            <div class="icon">🗳️</div>
+            <div class="title">创建投票</div>
+            <div class="desc">发起新的投票项目</div>
+        </a>
+        <a href="/my-votes.html" class="flow-step">
+            <div class="icon">📊</div>
+            <div class="title">我的投票</div>
+            <div class="desc">查看投票结果</div>
+        </a>
+    `;
+
+    // Status detail
+    const sd = document.getElementById('statusDetail');
+    const credBadge = isRevoked ? 'badge-err' : (hasCred ? 'badge-ok' : 'badge-warn');
+        const credText = isRevoked ? '已撤销 🚫' : (hasCred ? '已获取 ✅' : '未获取');
+        sd.innerHTML = `
+        <div class="dr"><span class="dk">用户ID</span><span class="dv" style="font-size:11px">${currentUser?.userId || '-'}</span></div>
+        <div class="dr"><span class="dk">用户名</span><span class="dv">${currentUser?.username || '-'}</span></div>
+        <div class="dr"><span class="dk">邮箱</span><span class="dv">${currentUser?.email || '未设置'}</span></div>
+        <div class="dr"><span class="dk">系统状态</span><span class="dv"><span class="badge ${sysStatus.initialized ? 'badge-ok' : 'badge-warn'}">${sysStatus.initialized ? '已初始化' : '未初始化'}</span></span></div>
+        <div class="dr"><span class="dk">发行者</span><span class="dv">${sysStatus.issuerCount || 0} 个 (阈值 ${sysStatus.t_I || '-'})</span></div>
+        <div class="dr"><span class="dk">追踪者</span><span class="dv">${sysStatus.tracerCount || 0} 个 (阈值 ${sysStatus.t_T || '-'})</span></div>
+        <div class="dr"><span class="dk">凭证</span><span class="dv"><span class="badge ${credBadge}">${credText}</span></span></div>
+        <div class="dr"><span class="dk">说明</span><span class="dv" style="font-size:12px;color:var(--text2)">${isRevoked ? '凭证已被撤销，无法继续使用' : '使用「凭证系统」获取凭证后，可进行匿名投票'}</span></div>
+    `;
+}
+
+async function doLogout() {
+    await fetch('/api/auth/logout', { method: 'POST' });
+    window.location.href = '/login.html';
+}
+
+checkAuth();
+</script>
+</body>
+</html>

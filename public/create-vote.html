@@ -3,233 +3,221 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>创建新的投票项目</title>
+    <title>创建投票 - 可撤销匿名凭证系统</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-            margin: 0;
-            padding: 0;
-        }
-        .container {
-            max-width: 600px;
-            margin: 50px auto;
-            background-color: #fff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }
-        h1 {
-            text-align: center;
-            color: #333;
-        }
-        label {
-            display: block;
-            margin-bottom: 5px;
-            color: #333;
-        }
-        input[type="text"],
-        select,
-        input[type="date"],
-        button {
-            width: 100%;
-            padding: 10px;
-            margin-bottom: 20px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            box-sizing: border-box;
-        }
-        button {
-            background-color: #007bff;
-            color: #fff;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-        }
-        button:hover {
-            background-color: #0056b3;
-        }
-        .message {
-            text-align: center;
-            margin-top: 20px;
-        }
-        .success {
-            color: green;
-        }
-        .error {
-            color: red;
-        }
+        :root { --bg:#0a0e1a; --bg2:#111827; --card:#1a1f35; --border:#2a3050; --text:#f0f4ff; --text2:#8892b0; --text3:#4a5578; --a1:#6366f1; --a2:#8b5cf6; --a3:#a78bfa; --ok:#10b981; --err:#ef4444; --warn:#f59e0b; --r:16px; --rs:10px; --rx:6px; }
+        html[data-theme="light"]{--bg:#f0f2f5;--bg2:#ffffff;--card:#ffffff;--border:#dce1e8;--text:#1e2330;--text2:#64748b;--text3:#94a3b8;--a1:#6366f1;--a2:#8b5cf6;--a3:#a78bfa;--ok:#10b981;--err:#ef4444;--warn:#f59e0b;}
+        html[data-theme="light"] .bg-grid{background-image:linear-gradient(rgba(99,102,241,0.06)1px,transparent 1px),linear-gradient(90deg,rgba(99,102,241,0.06)1px,transparent 1px)}
+        html[data-theme="light"] .glow{opacity:.4}
+        .theme-btn{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;background:var(--card);border:1px solid var(--border);border-radius:var(--rx);cursor:pointer;font-size:16px;transition:.3s;font-family:inherit;line-height:1;padding:0;flex-shrink:0}
+        .theme-btn:hover{border-color:var(--a1);transform:translateY(-1px)}
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; line-height:1.6; }
+        .bg-grid { position:fixed; inset:0; background-image:linear-gradient(rgba(99,102,241,0.03)1px,transparent 1px),linear-gradient(90deg,rgba(99,102,241,0.03)1px,transparent 1px); background-size:60px 60px; pointer-events:none; z-index:0; }
+        .glow { position:fixed; top:-20%; right:-10%; width:500px; height:500px; background:radial-gradient(circle,rgba(99,102,241,0.08) 0%,transparent 70%); border-radius:50%; pointer-events:none; z-index:0; animation:f 8s ease-in-out infinite; }
+        @keyframes f { 0%,100%{transform:translate(0,0)scale(1)} 50%{transform:translate(30px,-30px)scale(1.05)} }
+        .container { position:relative; z-index:1; max-width:680px; margin:0 auto; padding:24px; }
+        .header { display:flex; justify-content:space-between; align-items:center; padding:20px 0; margin-bottom:24px; border-bottom:1px solid var(--border); }
+        .header h1 { font-size:22px; font-weight:700; background:linear-gradient(135deg,var(--text),var(--a2)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+        .header-right { display:flex; align-items:center; gap:10px; }
+        .card { background:var(--card); border:1px solid var(--border); border-radius:var(--r); padding:28px; margin-bottom:16px; }
+        .card h2 { font-size:18px; font-weight:700; margin-bottom:8px; display:flex; align-items:center; gap:10px; }
+        .card p { color:var(--text2); font-size:14px; margin-bottom:20px; }
+        .row { margin-bottom:16px; }
+        .row label { display:block; font-size:13px; color:var(--text2); font-weight:500; margin-bottom:6px; }
+        input,select { width:100%; background:var(--bg2); border:1px solid var(--border); border-radius:var(--rx); padding:10px 14px; color:var(--text); font-size:13px; font-family:inherit; outline:none; transition:.3s; }
+        input:focus,select:focus { border-color:var(--a1); box-shadow:0 0 0 3px rgba(99,102,241,0.15); }
+        select { cursor:pointer; }
+        select option { background:var(--bg2); color:var(--text); }
+        .opt-row { display:flex; gap:10px; align-items:center; margin-bottom:8px; }
+        .opt-row .opt-num { width:28px; height:28px; border-radius:50%; background:var(--bg2); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:600; color:var(--text2); flex-shrink:0; }
+        .opt-row input { flex:1; }
+        .btn { display:inline-flex; align-items:center; gap:8px; padding:10px 24px; border-radius:var(--rx); font-size:13px; font-weight:600; border:none; cursor:pointer; transition:.3s; font-family:inherit; text-decoration:none; }
+        .btn-primary { background:linear-gradient(135deg,var(--a1),var(--a2)); color:white; }
+        .btn-primary:hover { transform:translateY(-1px); box-shadow:0 4px 16px rgba(99,102,241,0.4); }
+        .btn-primary:disabled { opacity:.4; cursor:not-allowed; transform:none; box-shadow:none; }
+        .btn-outline { background:transparent; color:var(--text2); border:1px solid var(--border); }
+        .btn-outline:hover { border-color:var(--a1); color:var(--text); }
+        .msg { display:none; align-items:center; gap:10px; padding:10px 14px; border-radius:var(--rx); font-size:13px; margin-top:12px; }
+        .msg.show { display:flex; }
+        .msg.ok { background:rgba(16,185,129,0.1); color:var(--ok); border:1px solid rgba(16,185,129,0.2); }
+        .msg.err { background:rgba(239,68,68,0.1); color:var(--err); border:1px solid rgba(239,68,68,0.2); }
+        .msg.info { background:rgba(59,130,246,0.1); color:#3b82f6; border:1px solid rgba(59,130,246,0.2); }
+        .result-box { text-align:center; padding:30px; border-radius:var(--rs); margin-top:12px; }
+        .result-box.ok { background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.2); }
+        .result-box.err { background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.2); }
+        .result-box .icon { font-size:48px; }
+        .result-box .title { font-size:18px; font-weight:700; margin-top:8px; }
+        .data-box { background:var(--bg2); border-radius:var(--rs); padding:14px; border:1px solid var(--border); font-family:monospace; font-size:12px; line-height:1.8; word-break:break-all; }
+        .dr { display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid rgba(42,48,80,0.5); }
+        .dr:last-child { border-bottom:none; }
+        .dk { color:var(--text2); font-size:13px; }
+        .dv { color:var(--text); font-size:13px; font-weight:500; }
+        .btn-sm { padding:6px 14px; font-size:12px; }
+        .user-badge { display:flex; align-items:center; gap:8px; background:var(--card); padding:8px 16px; border-radius:var(--rx); border:1px solid var(--border); font-size:13px; }
+        .user-badge .avatar { width:28px; height:28px; border-radius:50%; background:linear-gradient(135deg,var(--a1),var(--a2)); display:flex; align-items:center; justify-content:center; font-size:12px; color:white; font-weight:600; }
+        .nav-bar { display:flex; align-items:center; gap:6px; padding:8px 0; margin-bottom:12px; flex-wrap:wrap; }
+        .nav-bar a { display:inline-flex; align-items:center; gap:4px; padding:5px 12px; border-radius:var(--rx); font-size:12px; font-weight:500; color:var(--text2); text-decoration:none; transition:.3s; background:var(--bg2); border:1px solid var(--border); }
+        .nav-bar a:hover { color:var(--text); border-color:var(--a1); }
+        .nav-bar .nav-back { margin-left:auto; }
+        @media(max-width:600px) { .header { flex-direction:column; gap:12px; } }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>创建新的投票项目</h1>
-        <form id="createVoteForm">
-            <label for="voteTitle">投票标题：</label>
-            <input type="text" id="voteTitle" name="voteTitle" required>
-            
-            <label for="numOptions">候选项数量：</label>
-            <select id="numOptions" name="numOptions" onchange="updateOptions()" required>
-                <option value="">选择候选项数量</option>
-                <option value="2">2</option>
-                <option value="3">3</option>
-                <option value="4">4</option>
-                <option value="5">5</option>
-                <option value="6">6</option>
-                <option value="7">7</option>
-                <option value="8">8</option>
-                <option value="9">9</option>
-                <option value="10">10</option>
-            </select>
-            
-            <div id="optionsContainer"></div>
-
-            <label for="deadline">截止日期：</label>
-            <input type="date" id="deadline" name="deadline" required>
-
-            
-            <button type="submit">创建投票</button>
-        </form>
-        <div id="message" class="message"></div>
+<div class="bg-grid"></div><div class="glow"></div>
+<div class="container">
+    <div class="nav-bar">
+        <a href="index.html">首页</a>
+        <a href="dashboard.html">用户中心</a>
+        <a href="javascript:history.back()" class="nav-back">返回</a>
+    </div>
+    <div class="header">
+        <h1>🗳️ 创建投票</h1>
+        <div class="header-right" id="headerRight">
+            <button class="theme-btn" onclick="toggleTheme()" title="切换主题"></button>
+            <div class="user-badge" id="userBadge"><div class="avatar">?</div><span id="userNameDisplay">未登录</span></div>
+        </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/web3@1.5.3/dist/web3.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@metamask/detect-provider@1.2.0/dist/detect-provider.min.js"></script>
-    <script>
-        function updateOptions() {
-            const numOptions = document.getElementById('numOptions').value;
-            const optionsContainer = document.getElementById('optionsContainer');
-            optionsContainer.innerHTML = ''; // 清空之前的选项
+    <div class="card">
+        <h2>📋 投票项目信息</h2>
+        <p>创建新的区块链投票项目，填写以下信息后点击创建</p>
+        <div class="row">
+            <label>投票标题</label>
+            <input id="voteTitle" placeholder="输入投票标题，例如：最佳项目评选">
+        </div>
+        <div class="row">
+            <label>候选项数量</label>
+            <select id="numOptions" onchange="updateOptions()">
+                <option value="">选择候选项数量</option>
+                <option value="2">2</option><option value="3">3</option><option value="4">4</option>
+                <option value="5" selected>5</option><option value="6">6</option><option value="7">7</option>
+                <option value="8">8</option><option value="9">9</option><option value="10">10</option>
+            </select>
+        </div>
+        <div id="optionsContainer" style="margin-bottom:12px"></div>
+        <div class="row">
+            <label>截止日期</label>
+            <input type="datetime-local" id="deadline">
+        </div>
+        <button class="btn btn-primary btn-lg" onclick="doCreateVote()" style="width:100%;justify-content:center;margin-top:4px">🚀 创建投票</button>
+        <div class="msg" id="msg"></div>
+    </div>
 
-            if (numOptions !== '') {
-                const optionValues = new Set(); // 用于存储已添加的候选项值
-                for (let i = 1; i <= numOptions; i++) {
-                    const label = document.createElement('label');
-                    label.textContent = `候选项 ${i}：`;
-                    optionsContainer.appendChild(label);
+    <div id="resultCard" style="display:none"></div>
+</div>
 
-                    const input = document.createElement('input');
-                    input.type = 'text';
-                    input.name = `option${i}`;
-                    input.required = true;
-                    input.addEventListener('input', function(event) {
-                        const value = event.target.value.trim(); // 移除首尾空格
-                        if (value !== '' && optionValues.has(value)) {
-                            event.target.setCustomValidity('候选项的值不能重复');
-                        } else {
-                            event.target.setCustomValidity('');
-                        }
-                    });
-                    optionsContainer.appendChild(input);
-                    optionValues.add(''); // 添加初始值，避免首次输入为空时的重复检查
+<script>
+(function(){const t=localStorage.getItem('theme');if(t==='light')document.documentElement.setAttribute('data-theme','light');updateThemeIcon()})();
+function toggleTheme(){const h=document.documentElement;const l=h.getAttribute('data-theme')==='light';l?(h.removeAttribute('data-theme'),localStorage.setItem('theme','dark')):(h.setAttribute('data-theme','light'),localStorage.setItem('theme','light'));updateThemeIcon()}
+function updateThemeIcon(){document.querySelectorAll('.theme-btn').forEach(b=>{b.textContent=document.documentElement.getAttribute('data-theme')==='light'?'🌙':'☀️'})}
+    const today = new Date();
+    const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate() + 1);
+    document.getElementById('deadline').value = tomorrow.toISOString().slice(0, 16);
 
-                    optionsContainer.appendChild(document.createElement('br'));
-                }
+    let currentUser = null;
+    let metaMaskAddress = '';
+
+    async function checkAuth() {
+        try {
+            const r = await fetch('/api/auth/me');
+            const d = await r.json();
+            if (d.loggedIn) {
+                currentUser = d.user;
+                document.getElementById('userNameDisplay').textContent = d.user.username;
+                document.querySelector('.avatar').textContent = d.user.username[0].toUpperCase();
+            } else {
+                window.location.href = '/login.html?redirect=' + encodeURIComponent(window.location.pathname);
             }
+        } catch(e) { window.location.href = '/login.html'; }
+        // 尝试获取 MetaMask 地址
+        try {
+            if (window.ethereum) {
+                const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                if (accounts && accounts.length > 0) metaMaskAddress = accounts[0];
+            }
+        } catch(e) {}
+    }
+    checkAuth();
+
+    function updateOptions() {
+        const n = parseInt(document.getElementById('numOptions').value);
+        if (!n) { document.getElementById('optionsContainer').innerHTML = '<p style="color:var(--text2);font-size:13px">请选择候选项数量</p>'; return; }
+        const c = document.getElementById('optionsContainer');
+        c.innerHTML = '<label style="display:block;font-size:13px;color:var(--text2);font-weight:500;margin-bottom:8px">候选项</label>';
+        for (let i = 1; i <= n; i++) {
+            const row = document.createElement('div'); row.className = 'opt-row';
+            row.innerHTML = `<div class="opt-num">${i}</div><input class="opt-inp" placeholder="候选项 ${i}">`;
+            c.appendChild(row);
         }
+    }
+    updateOptions();
 
-        // 设置截止日期的最小值为明天的日期
-        const today = new Date();
-        const tomorrow = new Date(today);
-        tomorrow.setDate(tomorrow.getDate() + 1); // 设置日期为明天
-        const tomorrowISO = tomorrow.toISOString().split('T')[0];
-        document.getElementById('deadline').setAttribute('min', tomorrowISO);
+    function $(id) { return document.getElementById(id); }
+    function show(el, msg, type) { el.className = `msg show ${type}`; el.innerHTML = msg; }
+    function hide(el) { el.className = 'msg'; }
 
-        window.addEventListener('DOMContentLoaded', async () => {
-            // 检查 MetaMask 是否安装
-            const provider = await detectEthereumProvider();
-            if (!provider) {
-                console.error('请安装 MetaMask 扩展程序');
-                return;
+    async function doCreateVote() {
+        const msg = $('msg'); hide(msg); $('resultCard').style.display = 'none';
+        const title = $('voteTitle').value.trim();
+        if (!title) { show(msg, '请输入投票标题', 'err'); return; }
+        const opts = Array.from(document.querySelectorAll('.opt-inp')).map(i => i.value.trim()).filter(v => v);
+        if (opts.length < 2) { show(msg, '至少需要 2 个候选项', 'err'); return; }
+        const deadline = new Date($('deadline').value).getTime();
+        if (!deadline) { show(msg, '请选择截止日期', 'err'); return; }
+
+        show(msg, '⏳ 正在部署合约到区块链...', 'info');
+
+        try {
+            const body = { voteTitle: title, numOptions: opts.length };
+            opts.forEach((o, i) => body['option' + (i + 1)] = o);
+            body.deadline = deadline;
+            body.creatorAddress = metaMaskAddress;
+
+            const r = await fetch('/createVote', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+            const data = await r.json();
+            if (data.success) {
+                hide(msg);
+                $('resultCard').style.display = 'block';
+                $('resultCard').innerHTML = `
+                    <div class="card">
+                        <div class="result-box ok">
+                            <div class="icon">✅</div>
+                            <div class="title" style="color:var(--ok)">投票创建成功！</div>
+                        </div>
+                        <div class="data-box" style="margin-top:12px">
+                            <div class="dr"><span class="dk">标题</span><span class="dv">${title}</span></div>
+                            <div class="dr"><span class="dk">候选项</span><span class="dv">${opts.join('、')}</span></div>
+                            <div class="dr"><span class="dk">合约地址</span><span class="dv" style="font-size:11px">${data.contractAddress}</span></div>
+                            <div class="dr"><span class="dk">截止</span><span class="dv">${new Date(deadline).toLocaleString()}</span></div>
+                        </div>
+                        <div style="display:flex;gap:10px;margin-top:16px">
+                            <button class="btn btn-primary" onclick="copyAddr('${data.contractAddress}')" style="flex:1;justify-content:center">📋 复制地址</button>
+                            <a href="/vote-with-credential.html" class="btn btn-outline" style="flex:1;justify-content:center">← 返回投票</a>
+                        </div>
+                    </div>
+                `;
+            } else {
+                show(msg, '创建失败: ' + (data.message || data.error || '未知错误'), 'err');
             }
+        } catch(e) {
+            show(msg, '创建失败: ' + e.message, 'err');
+        }
+    }
 
-            // 创建 Web3 实例
-            const web3 = new Web3(provider);
-
-            try {
-                // 请求 MetaMask 授权
-                await ethereum.request({ method: 'eth_requestAccounts' });
-
-                // 获取 MetaMask 用户地址
-                const accounts = await web3.eth.getAccounts();
-                const metaMaskUser = accounts[0];
-
-                // 将 MetaMask 用户地址添加到表单数据中
-                document.getElementById('createVoteForm').addEventListener('submit', function(event) {
-                    event.preventDefault();
-
-                    const formData = new FormData(this); // 获取表单数据
-                    const data = {};
-                    formData.forEach(function(value, key) {
-                        data[key] = value;
-                    });
-
-                    // 添加 MetaMask 用户地址到数据中
-                    data.metaMaskUser = metaMaskUser;
-
-                    // 检查候选项是否重复
-                    const optionValues = new Set();
-                    let hasDuplicate = false;
-                    for (let i = 1; i <= data.numOptions; i++) {
-                        const option = data[`option${i}`].trim(); // 移除首尾空格
-                        if (option !== '') {
-                            if (optionValues.has(option)) {
-                                hasDuplicate = true;
-                                break;
-                            } else {
-                                optionValues.add(option);
-                            }
-                        }
-                    }
-
-                    if (hasDuplicate) {
-                        alert('候选项的值不能重复');
-                    } else {
-                        // 候选项没有重复，提交表单
-                        fetch('/createVote', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify(data)
-                        })
-                        .then(response => {
-                            if (!response.ok) {
-                                throw new Error('网络响应错误');
-                            }
-                            return response.json();
-                        })
-                        .then(data => {
-                            const messageElement = document.getElementById('message');
-                            if (data.success) {
-                                messageElement.textContent = `投票项目创建成功！合约地址：${data.contractAddress}`;
-                                messageElement.classList.add('success');
-
-                                // 将合约地址复制到剪贴板
-                                navigator.clipboard.writeText(data.contractAddress)
-                                .then(() => console.log('合约地址已复制到剪贴板'))
-                                .catch(err => console.error('复制到剪贴板失败：', err));
-
-                                // Redirect to index.html on successful creation
-                                setTimeout(() => {
-                                    window.location.href = '/index.html';
-                                }, 1000); // Redirect after 2 seconds
-                            } else {
-                                messageElement.textContent = '投票项目创建失败，请稍后重试。';
-                                messageElement.classList.add('error');
-                            }
-                        }) 
-                        .catch(error => {
-                            console.error('发生错误：', error);
-                            const messageElement = document.getElementById('message');
-                            messageElement.textContent = '发生错误，请稍后重试。';
-                            messageElement.classList.add('error');
-                        });
-                    }
-                });
-            } catch (error) {
-                console.error('授权失败:', error);
-            }
-        });
-    </script>
+    function copyAddr(addr) {
+        navigator.clipboard.writeText(addr).then(() => {
+            const btn = event.target;
+            const orig = btn.innerHTML;
+            btn.innerHTML = '✅ 已复制';
+            setTimeout(() => btn.innerHTML = orig, 1500);
+        }).catch(() => alert('复制失败'));
+    }
+</script>
 </body>
 </html>

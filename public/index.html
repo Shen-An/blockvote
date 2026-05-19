@@ -1,207 +1,179 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>区块链投票系统</title>
-    <script src="https://cdn.jsdelivr.net/npm/web3@1.5.3/dist/web3.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@metamask/detect-provider@1.2.0/dist/detect-provider.min.js"></script>
+    <title>区块链匿名投票系统</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f9f9f9;
-            margin: 0;
-            padding: 0;
-        }
-    
-        .container {
-            max-width: 800px;
-            margin: 50px auto;
-            background-color: #fff;
-            border-radius: 8px;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
-            padding: 40px;
-            text-align: center;
-        }
-    
-        h1 {
-            color: #333;
-            font-size: 36px;
-            margin-bottom: 20px;
-        }
-    
-        .info {
-            margin-bottom: 40px;
-            text-align: center;
-        }
-    
-        .account,
-        .balance {
-            margin-bottom: 10px;
-            font-size: 18px;
-            display: inline-block;
-            text-align: left; /* 左对齐 */
-        }
-    
-        .buttons {
-            margin-bottom: 40px;
-        }
-    
-        .button {
-            padding: 12px 24px;
-            margin: 0 10px;
-            background-color: #007bff;
-            color: #fff;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-            font-size: 16px;
-        }
-    
-        .button:hover {
-            background-color: #0056b3;
-        }
-    
-        .benefits {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 40px;
-        }
-    
-        .benefits .benefit {
-            flex: 1;
-            margin: 0 10px;
-            padding: 55px;
-            border-radius: 8px;
-            background-size: cover;
-            background-repeat: no-repeat;
-            background-position: center;
-            transition: transform 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-    
-        .benefits .benefit:hover {
-            transform: scale(1.1);
-        }
-
-        .benefit .description {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background-color: rgba(0, 0, 0, 0.7);
-            color: #fff;
-            padding: 10px;
-            border-radius: 5px;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-            width: 80%; /* 调整宽度 */
-        }
-
-        .benefit:hover .description {
-            opacity: 1;
-        }
-
-        .benefit img {
-            width: 100%;
-            height: auto;
-        }
-    
-        .contact-info {
-            margin-top: 30px;
-            font-size: 16px;
-            color: #333;
-        }
-    </style>    
+        :root { --bg:#0a0e1a; --bg2:#111827; --card:#1a1f35; --border:#2a3050; --text:#f0f4ff; --text2:#8892b0; --text3:#4a5578; --a1:#6366f1; --a2:#8b5cf6; --a3:#a78bfa; --ok:#10b981; --err:#ef4444; --warn:#f59e0b; --r:16px; --rs:10px; --rx:6px; }
+        html[data-theme="light"]{--bg:#f0f2f5;--bg2:#ffffff;--card:#ffffff;--border:#dce1e8;--text:#1e2330;--text2:#64748b;--text3:#94a3b8;--a1:#6366f1;--a2:#8b5cf6;--a3:#a78bfa;--ok:#10b981;--err:#ef4444;--warn:#f59e0b;}
+        html[data-theme="light"] .bg-grid{background-image:linear-gradient(rgba(99,102,241,0.06)1px,transparent 1px),linear-gradient(90deg,rgba(99,102,241,0.06)1px,transparent 1px)}
+        html[data-theme="light"] .glow,.glow2{opacity:.4}
+        .theme-btn{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;background:var(--card);border:1px solid var(--border);border-radius:var(--rx);cursor:pointer;font-size:16px;transition:.3s;font-family:inherit;line-height:1;padding:0;flex-shrink:0}
+        .theme-btn:hover{border-color:var(--a1);transform:translateY(-1px)}
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; line-height:1.6; }
+        .bg-grid { position:fixed; inset:0; background-image:linear-gradient(rgba(99,102,241,0.03)1px,transparent 1px),linear-gradient(90deg,rgba(99,102,241,0.03)1px,transparent 1px); background-size:60px 60px; pointer-events:none; z-index:0; }
+        .glow { position:fixed; top:-20%; right:-10%; width:600px; height:600px; background:radial-gradient(circle,rgba(99,102,241,0.08) 0%,transparent 70%); border-radius:50%; pointer-events:none; z-index:0; animation:f 8s ease-in-out infinite; }
+        .glow2 { position:fixed; bottom:-20%; left:-10%; width:500px; height:500px; background:radial-gradient(circle,rgba(139,92,246,0.06) 0%,transparent 70%); border-radius:50%; pointer-events:none; z-index:0; animation:f 10s ease-in-out infinite reverse; }
+        @keyframes f { 0%,100%{transform:translate(0,0)scale(1)} 50%{transform:translate(30px,-30px)scale(1.05)} }
+        .container { position:relative; z-index:1; max-width:1100px; margin:0 auto; padding:24px; }
+        .top-bar { display:flex; justify-content:space-between; align-items:center; padding:16px 0; margin-bottom:8px; flex-wrap:wrap; gap:12px; }
+        .logo { font-size:20px; font-weight:800; background:linear-gradient(135deg,var(--text),var(--a2)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+        .top-right { display:flex; align-items:center; gap:8px; }
+        .btn { display:inline-flex; align-items:center; gap:6px; padding:8px 20px; border-radius:var(--rx); font-size:13px; font-weight:600; cursor:pointer; border:none; transition:.3s; font-family:inherit; text-decoration:none; white-space:nowrap; }
+        .btn-primary { background:linear-gradient(135deg,var(--a1),var(--a2)); color:white; }
+        .btn-primary:hover { transform:translateY(-1px); box-shadow:0 4px 16px rgba(99,102,241,0.4); }
+        .btn-outline { background:transparent; color:var(--text2); border:1px solid var(--border); }
+        .btn-outline:hover { border-color:var(--a1); color:var(--text); }
+        .btn-success { background:linear-gradient(135deg,var(--ok),#059669); color:white; }
+        .btn-sm { padding:6px 14px; font-size:12px; }
+        .user-badge { display:flex; align-items:center; gap:8px; background:var(--card); padding:8px 16px; border-radius:var(--rx); border:1px solid var(--border); font-size:13px; }
+        .hero { text-align:center; padding:60px 20px 40px; }
+        .hero .badge { display:inline-flex; align-items:center; gap:8px; background:rgba(99,102,241,0.1); color:var(--a3); border:1px solid rgba(99,102,241,0.2); padding:6px 16px; border-radius:20px; font-size:12px; font-weight:600; margin-bottom:20px; }
+        .hero h1 { font-size:48px; font-weight:800; background:linear-gradient(135deg,var(--text),var(--a2),var(--ok)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; margin-bottom:12px; line-height:1.2; }
+        .hero p { font-size:16px; color:var(--text2); max-width:600px; margin:0 auto 32px; }
+        .hero .actions { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; }
+        .card { background:var(--card); border:1px solid var(--border); border-radius:var(--r); padding:28px; transition:.3s; }
+        .card:hover { border-color:var(--a1); transform:translateY(-2px); }
+        .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:16px; margin:32px 0; }
+        .feature-card { background:var(--card); border:1px solid var(--border); border-radius:var(--r); padding:28px; text-align:center; transition:.3s; text-decoration:none; color:var(--text); }
+        .feature-card:hover { border-color:var(--a1); transform:translateY(-4px); box-shadow:0 8px 32px rgba(99,102,241,0.15); }
+        .feature-card .icon { font-size:40px; margin-bottom:12px; }
+        .feature-card h3 { font-size:16px; font-weight:700; margin-bottom:6px; }
+        .feature-card p { font-size:13px; color:var(--text2); }
+        .section-title { font-size:18px; font-weight:700; margin:40px 0 16px; display:flex; align-items:center; gap:10px; }
+        .quick-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:12px; margin:24px 0; }
+        .quick-link { background:var(--bg2); border:1px solid var(--border); border-radius:var(--rs); padding:20px; text-align:center; text-decoration:none; color:var(--text); transition:.3s; }
+        .quick-link:hover { border-color:var(--a1); transform:translateY(-2px); }
+        .quick-link .icon { font-size:32px; }
+        .nav-bar { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+        .nav-bar a { display:inline-flex; align-items:center; gap:4px; padding:5px 12px; border-radius:var(--rx); font-size:12px; font-weight:500; color:var(--text2); text-decoration:none; transition:.3s; background:var(--bg2); border:1px solid var(--border); }
+        .nav-bar a:hover { color:var(--text); border-color:var(--a1); }
+        .nav-bar .nav-back { margin-left:auto; }
+        .quick-link .title { font-size:14px; font-weight:600; margin-top:8px; }
+        .quick-link .desc { font-size:11px; color:var(--text2); margin-top:4px; }
+        .footer { text-align:center; padding:32px 0; margin-top:40px; border-top:1px solid var(--border); color:var(--text3); font-size:12px; }
+        .footer a { color:var(--a2); text-decoration:none; }
+        @media(max-width:700px) { .hero h1 { font-size:32px; } .top-bar { flex-direction:column; } }
+    </style>
 </head>
 <body>
-    <div class="container">
-        <h1>欢迎使用区块链投票系统！</h1>
-        <div class="info">
-            <div id="account" class="account"></div>
-            <div id="balance" class="balance"></div>
-        </div>
-
-        <div class="buttons">
-            <button id="createVote" class="button">发起投票</button>
-            <button id="joinVote" class="button">加入投票</button>
-            <button id="myVotes" class="button">我的投票</button>
-            <button id="historyContracts" class="button">查看历史合约</button>
-        </div>
-
-        <div class="benefits">
-            <div class="benefit" style="background-image: url('透明公正.jpg');">
-                <div class="description">公开透明 - 允许全球用户参与投票，确保公正性和透明度。</div>
-            </div>
-            <div class="benefit" style="background-image: url('安全可靠.jfif');">
-                <div class="description">安全可靠 - 采用先进的加密技术，保护用户数据和投票结果的安全。</div>
-            </div>
-            <div class="benefit" style="background-image: url('去中心化.jfif');">
-                <div class="description">去中心化 - 分布式架构，消除单点故障，确保系统的稳定性。</div>
-            </div>
-            <div class="benefit" style="background-image: url('全球化.jfif');">
-                <div class="description">全球化 - 允许全球用户参与投票，确保公正性和透明度。</div>
-            </div>
-        </div>
-
-        <div class="contact-info">
-            <h2>联系我们</h2>
-            <p>如果您有任何疑问或建议，请随时联系我们：</p>
-            <p>Email: 2025124166@chd.edu.cn</p>
+<div class="bg-grid"></div><div class="glow"></div><div class="glow2"></div>
+<div class="container">
+    <div class="top-bar">
+        <div class="logo">⧫ BlockVote</div>
+        <div class="top-right" id="topRight">
+            <span id="userDisplay" class="user-badge" style="display:none">👤 <span id="userNameDisplay"></span></span>
+            <span id="loginBtns">
+                <a href="/login.html" class="btn btn-outline btn-sm">登录</a>
+                <a href="/register.html" class="btn btn-primary btn-sm">注册</a>
+            </span>
+            <button class="theme-btn" onclick="toggleTheme()" title="切换主题"></button>
         </div>
     </div>
-    <script>
-        // 在页面加载时立即执行的同步代码
-        window.addEventListener('DOMContentLoaded', async () => {
-            // 检查 MetaMask 是否安装
-            const provider = await detectEthereumProvider();
-            if (!provider) {
-                console.error('请安装 MetaMask 扩展程序');
-                return;
+    <div class="nav-bar" style="margin-bottom:24px">
+        <a href="index.html">首页</a>
+        <a href="dashboard.html">用户中心</a>
+        <a href="javascript:history.back()" class="nav-back">返回</a>
+    </div>
+
+    <div class="hero">
+        <div class="badge">⛓️ 基于以太坊 + BLS12-381 密码学</div>
+        <h1>安全 · 匿名 · 去中心化投票</h1>
+        <p>基于可撤销匿名凭证系统，结合区块链智能合约，实现可验证的匿名投票。投票者匿名性由密码学保证，验证者无法追踪投票者身份。</p>
+        <div class="actions">
+            <a href="/vote-with-credential.html" class="btn btn-primary" style="padding:12px 32px;font-size:15px">🎭 开始匿名投票</a>
+            <a href="/create-vote.html" class="btn btn-outline" style="padding:12px 32px;font-size:15px">🗳️ 创建投票</a>
+        </div>
+    </div>
+
+    <!-- Features -->
+    <div class="grid">
+        <div class="feature-card">
+            <div class="icon">🔐</div>
+            <h3>可撤销匿名凭证</h3>
+            <p>基于 BLS12-381 双线性配对，发行者可签发匿名凭证，追踪者可撤销恶意投票者匿名性</p>
+        </div>
+        <div class="feature-card">
+            <div class="icon">🎭</div>
+            <h3>完美匿名投票</h3>
+            <p>Show 算法生成匿名令牌，验证者只能验证令牌合法性，无法追踪投票者身份</p>
+        </div>
+        <div class="feature-card">
+            <div class="icon">⛓️</div>
+            <h3>区块链存证</h3>
+            <p>投票记录上链存储，智能合约自动计票，结果公开可验证，不可篡改</p>
+        </div>
+        <div class="feature-card">
+            <div class="icon">📊</div>
+            <h3>实时统计</h3>
+            <p>通过柱状图可视化投票结果，支持搜索和分页查看历史投票记录</p>
+        </div>
+    </div>
+
+    <div class="section-title">⚡ 快速入口</div>
+    <div class="quick-grid">
+        <a href="/vote-with-credential.html" class="quick-link">
+            <div class="icon">🎭</div>
+            <div class="title">匿名投票</div>
+            <div class="desc">使用凭证系统匿名投票</div>
+        </a>
+        <a href="/credential-system.html" class="quick-link">
+            <div class="icon">🔐</div>
+            <div class="title">凭证系统</div>
+            <div class="desc">管理匿名凭证</div>
+        </a>
+        <a href="/create-vote.html" class="quick-link">
+            <div class="icon">🗳️</div>
+            <div class="title">创建投票</div>
+            <div class="desc">发起区块链投票</div>
+        </a>
+        <a href="/join-vote.html" class="quick-link">
+            <div class="icon">🔍</div>
+            <div class="title">加入投票</div>
+            <div class="desc">通过合约地址参与</div>
+        </a>
+        <a href="/my-votes.html" class="quick-link">
+            <div class="icon">📊</div>
+            <div class="title">我的投票</div>
+            <div class="desc">查看我创建的投票</div>
+        </a>
+        <a href="/history-contracts.html" class="quick-link">
+            <div class="icon">📜</div>
+            <div class="title">投票历史</div>
+            <div class="desc">查看参与记录</div>
+        </a>
+        <a href="/vote-explorer.html" class="quick-link">
+            <div class="icon">🔍</div>
+            <div class="title">投票浏览器</div>
+            <div class="desc">输入合约地址查看链上匿名性</div>
+        </a>
+    </div>
+
+    <div class="footer">
+        <p>BlockVote · 基于以太坊智能合约的匿名投票系统</p>
+        <p style="margin-top:4px">📧 联系我们: 2025124166@chd.edu.cn</p>
+    </div>
+</div>
+
+<script>
+(function(){const t=localStorage.getItem('theme');if(t==='light')document.documentElement.setAttribute('data-theme','light');updateThemeIcon()})();
+function toggleTheme(){const h=document.documentElement;const l=h.getAttribute('data-theme')==='light';l?(h.removeAttribute('data-theme'),localStorage.setItem('theme','dark')):(h.setAttribute('data-theme','light'),localStorage.setItem('theme','light'));updateThemeIcon()}
+function updateThemeIcon(){document.querySelectorAll('.theme-btn').forEach(b=>{b.textContent=document.documentElement.getAttribute('data-theme')==='light'?'🌙':'☀️'})}
+    window.addEventListener('DOMContentLoaded', async () => {
+        try {
+            const r = await fetch('/api/auth/me');
+            const d = await r.json();
+            if (d.loggedIn) {
+                document.getElementById('loginBtns').style.display = 'none';
+                const ub = document.getElementById('userDisplay');
+                ub.style.display = 'flex';
+                document.getElementById('userNameDisplay').textContent = d.user.username;
             }
-
-            // 创建 Web3 实例
-            const web3 = new Web3(provider);
-
-            try {
-                // 请求 MetaMask 授权
-                await ethereum.request({ method: 'eth_requestAccounts' });
-                // 获取账户地址
-                const accounts = await web3.eth.getAccounts();
-                const account = accounts[0];
-                // 获取账户余额
-                const balance = await web3.eth.getBalance(account);
-
-                // 显示账户地址和余额
-                document.getElementById('account').innerText = `账户地址：${account}`;
-                document.getElementById('balance').innerText = `账户余额：${web3.utils.fromWei(balance, 'ether')} ETH`;
-            } catch (error) {
-                console.error('授权失败:', error);
-            }
-        });
-
-        // 点击创建投票按钮时跳转到创建投票页面
-        document.getElementById('createVote').addEventListener('click', () => {
-            window.location.href = '/create-vote.html';
-        });
-
-        // 点击加入投票按钮时跳转到加入投票页面
-        document.getElementById('joinVote').addEventListener('click', () => {
-            window.location.href = '/join-vote.html';
-        });
-        
-        // 点击我的投票按钮时跳转到我的投票页面
-        document.getElementById('myVotes').addEventListener('click', () => {
-            window.location.href = '/my-votes.html';
-        });
-
-        // 点击查看历史合约跳转到历史合约界面
-        document.getElementById('historyContracts').addEventListener('click', () => {
-            window.location.href = '/history-contracts.html'; // 修改为历史合约页面的 URL
-        });        
-    </script>
+        } catch(e) {}
+    });
+</script>
 </body>
 </html>

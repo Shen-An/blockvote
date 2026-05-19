@@ -7,6 +7,9 @@ const fs = require("fs");
 const pino = require('pino');
 const Web3 = require('web3');
 const mysql = require('mysql2'); // 使用mysql2模块
+const crypto = require('./crypto/index');
+const { ttpService } = require('./services/ttpService');
+const session = require('express-session');
 
 // 获取合约ABI和字节码
 const VotingSystemContract = require('./build/contracts/VotingSystem.json');
@@ -18,18 +21,59 @@ const db = new Level('ethereum', { valueEncoding: 'json' })
 // 连接到以太坊网络
 const web3 = new Web3('http://localhost:7545');
 
-// 设置静态文件目录
-app.use(express.static(path.join(__dirname, 'public')));
-
-// 流日志
-const stream = fs.createWriteStream("./log.txt", { flags: 'a' });
-const logger = pino(stream);
+// 获取 Ganache 默认账户用于合约部署
+let ganacheAccount = null;
 
 // 使用 express.urlencoded() 中间件解析表单数据
 app.use(express.urlencoded({ extended: true }));
 
 // 使用 express.json() 中间件解析 JSON 数据
 app.use(express.json());
+
+// 会话管理
+app.use(session({
+    secret: 'blockvote-anon-cred-secret-key-2024',
+    resave: false,
+    saveUninitialized: false,
+    cookie: { maxAge: 24 * 60 * 60 * 1000 } // 24h
+}));
+
+// 认证路由
+const authRoutes = require('./routes/authRoutes');
+app.use('/api/auth', authRoutes);
+
+// ─── 登录拦截中间件 ───
+const publicPaths = ['/login.html', '/register.html'];
+const publicExts = ['.css', '.js', '.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico', '.woff', '.woff2'];
+app.use((req, res, next) => {
+    // 放过静态资源扩展名
+    if (publicExts.some(ext => req.path.endsWith(ext))) return next();
+    // 放过公开路径
+    if (publicPaths.some(p => req.path.startsWith(p))) return next();
+    // 放过 /api/auth 路径（登录/注册接口）
+    if (req.path.startsWith('/api/auth')) return next();
+    // 放过 /api/votes 路径（公开投票列表）
+    if (req.path.startsWith('/api/votes')) return next();
+    // 放过 /api/ballot 路径（投票浏览器）
+    if (req.path.startsWith('/api/ballot')) return next();
+    // 未登录
+    if (!req.session || !req.session.user) {
+        // API 请求返回 JSON
+        if (req.path.startsWith('/api/') || req.xhr || (req.headers.accept && req.headers.accept.includes('json'))) {
+            return res.status(401).json({ success: false, message: '请先登录' });
+        }
+        // 页面请求重定向到登录
+        return res.redirect('/login.html');
+    }
+    next();
+});
+
+// 设置静态文件目录（放在 auth 中间件之后，确保需要登录的页面被拦截）
+app.use(express.static(path.join(__dirname, 'public')));
+
+// 流日志
+const stream = fs.createWriteStream("./log.txt", { flags: 'a' });
+const logger = pino(stream);
 
 // 创建MySQL连接池
 const pool = mysql.createPool({
@@ -139,7 +183,7 @@ function getBallotsData(callback) {
 }
 
 // 插入历史合约数据的函数
-function insertHistoryContract(contractAddress, voterAddress, voteTitle, deadline, userChoice) {
+function insertHistoryContract(contractAddress, voterAddress, voteTitle, deadline, userChoice, voterEmail) {
     return new Promise((resolve, reject) => {
         pool.getConnection((err, connection) => {
             if (err) {
@@ -147,8 +191,8 @@ function insertHistoryContract(contractAddress, voterAddress, voteTitle, deadlin
                 return;
             }
 
-            const query = 'INSERT INTO history_contracts (contract_address, voter_address, vote_title, deadline, user_choice, created_at) VALUES (?, ?, ?, ?, ?, NOW())';
-            connection.query(query, [contractAddress, voterAddress, voteTitle, deadline, userChoice], (error, results) => {
+            const query = 'INSERT INTO history_contracts (contract_address, voter_address, vote_title, deadline, user_choice, created_at, voter_email) VALUES (?, ?, ?, ?, ?, NOW(), ?)';
+            connection.query(query, [contractAddress, voterAddress, voteTitle, deadline, userChoice, voterEmail || null], (error, results) => {
                 connection.release();
                 if (error) {
                     reject(error);
@@ -211,7 +255,10 @@ async function saveBlockDataToDatabase(fromAddress, toAddress) {
 app.post('/createVote', async (req, res) => {
     // 从请求体中提取表单数据
     const formData = req.body;
-    const metaMaskUser = req.body.metaMaskUser;
+    // 使用 Ganache 账户部署合约（不再依赖客户端 MetaMask 签名）
+    const deployer = ganacheAccount || '0x0000000000000000000000000000000000000001';
+    // 用于数据库存储的创建者标识：优先使用前端传来的 creatorAddress
+    const creatorAddress = formData.creatorAddress || deployer;
     // 单独保存表单数据的各个字段
     const voteTitle = formData.voteTitle;
     const numOptions = formData.numOptions;
@@ -227,38 +274,38 @@ app.post('/createVote', async (req, res) => {
         let newContractInstance = await new web3.eth.Contract(contractABI)
             .deploy({
                 data: contractBytecode,
-                arguments: [voteTitle, options, deadlineTimestamp] // 传递合约到构造函数中，但是由于本地字节码是源码的，需要再次调用合约函数
+                arguments: [voteTitle, options, deadlineTimestamp]
             })
             .send({
-                from: metaMaskUser, // 使用全局变量中存储的调用者地址来部署合约
-                gas: 1500000, // 指定 gas 上限
-                gasPrice: '30000000000' // 指定 gas 价格
-            }); 
+                from: deployer,
+                gas: 3000000,
+                gasPrice: '30000000000'
+            });
 
         // 存入日志文件中
         logger.info({
             message: "Successfully to create a new contract",
             contractAddress: newContractInstance.options.address,
-            createdBy: metaMaskUser,
+            createdBy: creatorAddress,
             voteTitle,
             deadlineTimestamp,
             options
         });
-        
+
         res.json({ success: true, contractAddress: newContractInstance.options.address });
         // 在成功部署合约后调用该函数，将合约信息插入到数据库中
-        insertDataIntoBallots(metaMaskUser, newContractInstance.options.address, voteTitle, formData.deadline);
-        initContract(voteTitle, options, deadlineTimestamp, metaMaskUser, newContractInstance);
+        const deadlineForDb = new Date(formData.deadline).toISOString().slice(0, 19).replace('T', ' ');
+        insertDataIntoBallots(creatorAddress, newContractInstance.options.address, voteTitle, deadlineForDb);
+        initContract(voteTitle, options, deadlineTimestamp, deployer, newContractInstance);
         // 部署合约成功后获取区块和交易信息
-        // 获取最新区块的信息
-        saveBlockDataToDatabase(metaMaskUser, newContractInstance.options.address);
+        saveBlockDataToDatabase(deployer, newContractInstance.options.address);
     } catch (error) {
         // 记录出错时的日志信息
         logger.error({
             errorMessage: error.message,
             stackTrace: error.stack
         });
-        res.status(500).json({ error: 'Failed to deploy contract' });
+        res.status(500).json({ error: 'Failed to deploy contract: ' + error.message });
     }
 });
 
@@ -355,6 +402,18 @@ app.get('/getBallotInfo', async (req, res) => {
     }
 });
 
+// 获取所有活跃投票合约（供匿名投票页面选择）
+app.get('/api/votes/active', (req, res) => {
+    const sql = `SELECT contract_address, vote_title, deadline, creator_address FROM ballots WHERE deleted = false ORDER BY deadline ASC`;
+    pool.query(sql, (error, rows) => {
+        if (error) {
+            res.json({ success: false, votes: [] });
+        } else {
+            res.json({ success: true, votes: rows });
+        }
+    });
+});
+
 // 获取当前用户创建的智能合约
 app.post('/getContracts', (req, res) => {
     const userPublicKey = req.body.publicKey;
@@ -426,6 +485,80 @@ app.post('/getHistoryContracts', (req, res) => {
     });
 });
 
+// 匿名匿名投票（使用凭证系统令牌 - 直接调用密码学验证）
+app.post('/voteAnon', async (req, res) => {
+    try {
+        const contractAddress = req.body.contractAddress;
+        const selectedOption = req.body.selectedOption;
+        const tokHashRaw = req.body.tokHash;
+        const tokData = req.body.tokData;
+
+        // 将十进制 tokHash 转为 bytes32 十六进制格式（兼容旧格式）
+        const tokHash = typeof tokHashRaw === 'string' && !tokHashRaw.startsWith('0x')
+            ? '0x' + BigInt(tokHashRaw).toString(16).padStart(64, '0')
+            : tokHashRaw;
+
+        if (!contractAddress || !selectedOption || !tokHash || !tokData) {
+            return res.status(400).json({ success: false, message: '缺少参数' });
+        }
+
+        // 1. 直接调用 Verify 验证令牌（不经过 HTTP，避免自引用）
+        if (!ttpService.initialized || !ttpService.pk) {
+            return res.json({ success: false, message: '凭证系统未初始化' });
+        }
+
+        const tok = {
+            sigma1: crypto.G1.fromHex(tokData.sigma1),
+            sigma2: crypto.G1.fromHex(tokData.sigma2),
+            gPrime: crypto.G2.fromHex(tokData.gPrime),
+            D: tokData.D,
+            disclosedHashes: (tokData.disclosedHashes || tokData.D.map(() => '1')).map(h => crypto.Fr.create(BigInt(h))),
+            pi2: { c: 1n, s: 1n },
+        };
+
+        const verifyResult = crypto.Verify(ttpService.pk, ttpService.pp, tok);
+        if (!verifyResult || !verifyResult.valid) {
+            return res.json({ success: false, message: '令牌验证失败（双线性配对不通过）' });
+        }
+
+        // 2. 检查合约状态
+        const contractInstance = new web3.eth.Contract(contractABI, contractAddress);
+        const isOpen = await contractInstance.methods.getIsOpen().call();
+        if (!isOpen) { return res.json({ success: false, message: '投票已结束' }); }
+
+        const tokenUsed = await contractInstance.methods.hasTokenUsed(tokHash).call();
+        if (tokenUsed) { return res.json({ success: false, message: '该令牌已投过票，可能为重复投票' }); }
+
+        const deadlineTimestamp = await contractInstance.methods.getDeadline().call();
+        if (Math.floor(Date.now()) >= Number(deadlineTimestamp)) {
+            return res.json({ success: false, message: '投票已经截止' });
+        }
+
+        // 3. 使用中继账户提交匿名投票交易
+        const accounts = await web3.eth.getAccounts();
+        const relayAccount = accounts[0];
+        await contractInstance.methods.castVoteAnon(selectedOption, tokHash).send({
+            from: relayAccount,
+            gas: 3000000,
+        });
+
+        saveBlockDataToDatabase(relayAccount, contractInstance.options.address);
+
+        // 4. 记录投票历史（绑定用户邮箱）
+        const voteTitle = await contractInstance.methods.getBallotTitle().call();
+        const deadlineData = new Date(Number(deadlineTimestamp));
+        const anonAddr = '0xAnon_' + String(tokHash).substring(0, 34);
+        const userEmail = req.session.user?.email || '';
+        await insertHistoryContract(contractAddress, anonAddr, voteTitle, deadlineData, selectedOption, userEmail);
+
+        logger.info({ message: '匿名投票成功', contractAddress, tokHash: String(tokHash).substring(0, 20) });
+        res.json({ success: true, message: '匿名投票成功' });
+    } catch (error) {
+        logger.error({ errorMessage: error.message, stackTrace: error.stack });
+        res.status(500).json({ success: false, error: '匿名投票失败: ' + error.message });
+    }
+});
+
 // 进行投票
 app.post('/vote', async (req, res) => {
     try {
@@ -456,7 +589,8 @@ app.post('/vote', async (req, res) => {
         }); 
         saveBlockDataToDatabase(publicKey, contractInstance.options.address);
         const deadlineData = new Date(Number(deadlineTimestamp));
-        await insertHistoryContract(contractAddress, publicKey, voteTitle, deadlineData, selectedOption);
+        const userEmail = req.session.user?.email || '';
+        await insertHistoryContract(contractAddress, publicKey, voteTitle, deadlineData, selectedOption, userEmail);
         // 发送响应
         res.json({ success: true });
     } catch (error) {
@@ -588,12 +722,106 @@ app.post('/getContractDetails', async (req, res) => {
     }
 });
 
+// ─── GET /api/ballot/:address/events ───
+// 获取投票合约的链上事件（用于投票浏览器验证匿名性）
+app.get('/api/ballot/:address/events', async (req, res) => {
+    try {
+        const { address } = req.params;
+        const contractInstance = new web3.eth.Contract(contractABI, address);
+
+        // 获取合约基本信息
+        const options = await contractInstance.methods.getOptions().call();
+        const title = await contractInstance.methods.getBallotTitle().call();
+        const deadlineTimestamp = await contractInstance.methods.getDeadline().call();
+        const isOpen = await contractInstance.methods.getIsOpen().call();
+        const voteCounts = await contractInstance.methods.getVoteCounts().call();
+
+        // 获取创建事件
+        const createdEvents = await contractInstance.getPastEvents('BallotCreated', {
+            fromBlock: 0,
+            toBlock: 'latest'
+        });
+
+        // 获取投票事件
+        const voteEvents = await contractInstance.getPastEvents('VoteCasted', {
+            fromBlock: 0,
+            toBlock: 'latest'
+        });
+
+        // 格式化投票事件
+        const formattedVotes = voteEvents.map((e, i) => ({
+            index: i + 1,
+            voter: e.returnValues.voter,
+            isAnonymous: e.returnValues.voter === '0x0000000000000000000000000000000000000000',
+            transactionHash: e.transactionHash,
+            blockNumber: e.blockNumber,
+        }));
+
+        // 统计匿名/非匿名投票数
+        const anonCount = formattedVotes.filter(v => v.isAnonymous).length;
+        const directCount = formattedVotes.filter(v => !v.isAnonymous).length;
+
+        // 将投票计数转为数字数组
+        const counts = voteCounts.map(c => Number(c));
+
+        res.json({
+            success: true,
+            contract: {
+                address,
+                title,
+                options,
+                deadline: Number(deadlineTimestamp),
+                deadlineFormatted: new Date(Number(deadlineTimestamp)).toLocaleString(),
+                isOpen,
+                voteCounts: counts,
+                totalVotes: counts.reduce((a, b) => a + b, 0),
+            },
+            events: {
+                created: createdEvents.map(e => ({
+                    creator: e.returnValues.creator,
+                    transactionHash: e.transactionHash,
+                    blockNumber: e.blockNumber,
+                })),
+                votes: formattedVotes,
+                anonymousCount: anonCount,
+                directCount: directCount,
+            }
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: '获取合约数据失败: ' + error.message
+        });
+    }
+});
+
+// 引入匿名凭证系统路由
+const credentialRoutes = require('./routes/credentialRoutes');
+app.use('/api/credential', credentialRoutes);
+
 // 启动服务器
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    logger.info('begin working!');
-    logger.info({
-        message: `Server is running on port ${PORT}`,
+
+async function startServer() {
+    // 确保 Ganache 账户已就绪
+    try {
+        const accounts = await web3.eth.getAccounts();
+        if (accounts && accounts.length > 0) {
+            ganacheAccount = accounts[0];
+            console.log('Ganache 账户已就绪:', ganacheAccount);
+        }
+    } catch (e) {
+        console.error('获取 Ganache 账户失败:', e.message);
+        console.log('使用默认地址部署合约（可能失败）');
+    }
+
+    app.listen(PORT, () => {
+        logger.info('begin working!');
+        logger.info({
+            message: `Server is running on port ${PORT}`,
+        });
+        console.log(`Server is running on port ${PORT}`);
     });
-    console.log(`Server is running on port ${PORT}`);
-});
+}
+
+startServer();
