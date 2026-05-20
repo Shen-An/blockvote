@@ -3,10 +3,8 @@ const router = express.Router();
 const crypto = require('crypto');
 const mysql = require('mysql2');
 
-const pool = mysql.createPool({
-    host: 'localhost', user: 'root', password: '123456', database: 'blockvote',
-    waitForConnections: true, connectionLimit: 10
-});
+const { db: dbConfig } = require('../config');
+const pool = mysql.createPool(dbConfig);
 
 const promisePool = pool.promise();
 

@@ -9,10 +9,8 @@ const mysql = require('mysql2');
 const issuerService = new IssuerService(ttpService);
 const tracerService = new TracerService(ttpService);
 
-const promisePool = mysql.createPool({
-    host: 'localhost', user: 'root', password: '123456', database: 'blockvote',
-    waitForConnections: true, connectionLimit: 10
-}).promise();
+const { db: dbConfig } = require('../config');
+const promisePool = mysql.createPool(dbConfig).promise();
 
 // 使用 session 中的 userId（数据库主键），前端 body 中的 userId 仅作凭证身份标识
 function getUserId(req) {

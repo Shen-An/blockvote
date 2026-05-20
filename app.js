@@ -76,12 +76,8 @@ const stream = fs.createWriteStream("./log.txt", { flags: 'a' });
 const logger = pino(stream);
 
 // 创建MySQL连接池
-const pool = mysql.createPool({
-    host: 'localhost',
-    user: 'root',
-    password: '123456',
-    database: 'blockvote'
-});
+const { db: dbConfig } = require('./config');
+const pool = mysql.createPool(dbConfig);
   
 // 存储区块信息到数据库
 async function saveBlockData(blockData) {
